@@ -356,8 +356,8 @@ function logError(...args: any[]) {
 	logger.error(logArgsToString(args));
 }
 
-function findPathSeparator(filePath: string) {
-	return filePath.includes('/') ? '/' : '\\';
+export function findPathSeparator(filePath: string) {
+	return filePath && filePath.includes('\\') ? '\\' : '/';
 }
 
 // Comparing two different file paths while ignoring any different path separators.
@@ -648,9 +648,6 @@ export class Delve {
 				}
 				if (launchArgs.buildFlags) {
 					dlvArgs.push('--build-flags=' + launchArgs.buildFlags);
-				}
-				if (launchArgs.init) {
-					dlvArgs.push('--init=' + launchArgs.init);
 				}
 				if (launchArgs.backend) {
 					dlvArgs.push('--backend=' + launchArgs.backend);
@@ -1131,6 +1128,11 @@ export class GoDebugSession extends LoggingDebugSession {
 	 * Cache the result in remoteToLocalPathMapping.
 	 */
 	protected inferLocalPathFromRemotePath(remotePath: string): string | undefined {
+		// Don't try to infer a path for a file that does not exist
+		if (remotePath === '') {
+			return remotePath;
+		}
+
 		if (this.remoteToLocalPathMapping.has(remotePath)) {
 			return this.remoteToLocalPathMapping.get(remotePath);
 		}

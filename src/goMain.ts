@@ -47,11 +47,8 @@ import {
 import {
 	isInPreviewMode,
 	languageServerIsRunning,
-	resetSurveyConfig,
 	showServerOutputChannel,
-	showSurveyConfig,
 	startLanguageServerWithFallback,
-	timeMinute,
 	watchLanguageServerConfiguration
 } from './goLanguageServer';
 import { lintCode } from './goLint';
@@ -67,6 +64,7 @@ import {
 	debugPrevious,
 	subTestAtCursor,
 	testAtCursor,
+	testAtCursorOrPrevious,
 	testCurrentFile,
 	testCurrentPackage,
 	testPrevious,
@@ -99,11 +97,12 @@ import {
 	isGoPathSet,
 	resolvePath
 } from './util';
-import { clearCacheForTools, fileExists, getCurrentGoRoot, setCurrentGoRoot } from './utils/pathUtils';
+import { clearCacheForTools, fileExists, getCurrentGoRoot, dirExists, setCurrentGoRoot } from './utils/pathUtils';
 import { WelcomePanel } from './welcome';
 import semver = require('semver');
 import vscode = require('vscode');
 import { getFormatTool } from './goFormat';
+import { resetSurveyConfig, showSurveyConfig, timeMinute } from './goSurvey';
 
 export let buildDiagnosticCollection: vscode.DiagnosticCollection;
 export let lintDiagnosticCollection: vscode.DiagnosticCollection;
@@ -153,8 +152,11 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
 	const configGOROOT = getGoConfig()['goroot'];
 	if (configGOROOT) {
-		logVerbose(`go.goroot = '${configGOROOT}'`);
-		setCurrentGoRoot(resolvePath(configGOROOT));
+		// We don't support unsetting go.goroot because we don't know whether
+		// !configGOROOT case indicates the user wants to unset process.env['GOROOT']
+		// or the user wants the extension to use the current process.env['GOROOT'] value.
+		// TODO(hyangah): consider utilizing an empty value to indicate unset?
+		await setGOROOTEnvVar(configGOROOT);
 	}
 
 	// Present a warning about the deprecation of the go.documentLink setting.
@@ -316,6 +318,13 @@ If you would like additional configuration for diagnostics from gopls, please se
 	);
 
 	ctx.subscriptions.push(
+		vscode.commands.registerCommand('go.test.cursorOrPrevious', (args) => {
+			const goConfig = getGoConfig();
+			testAtCursorOrPrevious(goConfig, 'test', args);
+		})
+	);
+
+	ctx.subscriptions.push(
 		vscode.commands.registerCommand('go.subtest.cursor', (args) => {
 			const goConfig = getGoConfig();
 			subTestAtCursor(goConfig, args);
@@ -439,12 +448,18 @@ If you would like additional configuration for diagnostics from gopls, please se
 	);
 
 	ctx.subscriptions.push(
-		vscode.workspace.onDidChangeConfiguration((e: vscode.ConfigurationChangeEvent) => {
+		vscode.workspace.onDidChangeConfiguration(async (e: vscode.ConfigurationChangeEvent) => {
 			if (!e.affectsConfiguration('go')) {
 				return;
 			}
 			const updatedGoConfig = getGoConfig();
 
+			if (e.affectsConfiguration('go.goroot')) {
+				const configGOROOT = updatedGoConfig['goroot'];
+				if (configGOROOT) {
+					await setGOROOTEnvVar(configGOROOT);
+				}
+			}
 			if (
 				e.affectsConfiguration('go.goroot') ||
 				e.affectsConfiguration('go.alternateTools') ||
@@ -984,4 +999,43 @@ function lintDiagnosticCollectionName(lintToolName: string) {
 		return 'go-lint';
 	}
 	return `go-${lintToolName}`;
+}
+
+// set GOROOT env var. If necessary, shows a warning.
+export async function setGOROOTEnvVar(configGOROOT: string) {
+	if (!configGOROOT) {
+		return;
+	}
+	const goroot = configGOROOT ? resolvePath(configGOROOT) : undefined;
+
+	const currentGOROOT = process.env['GOROOT'];
+	if (goroot === currentGOROOT) {
+		return;
+	}
+	if (!(await dirExists(goroot))) {
+		vscode.window.showWarningMessage(`go.goroot setting is ignored. ${goroot} is not a valid GOROOT directory.`);
+		return;
+	}
+	const neverAgain = { title: "Don't Show Again" };
+	const ignoreGOROOTSettingWarningKey = 'ignoreGOROOTSettingWarning';
+	const ignoreGOROOTSettingWarning = getFromGlobalState(ignoreGOROOTSettingWarningKey);
+	if (!ignoreGOROOTSettingWarning) {
+		vscode.window
+			.showInformationMessage(
+				`"go.goroot" setting (${goroot}) will be applied and set the GOROOT environment variable.`,
+				neverAgain
+			)
+			.then((result) => {
+				if (result === neverAgain) {
+					updateGlobalState(ignoreGOROOTSettingWarningKey, true);
+				}
+			});
+	}
+
+	logVerbose(`setting GOROOT = ${goroot} (old value: ${currentGOROOT}) because "go.goroot": "${configGOROOT}"`);
+	if (goroot) {
+		process.env['GOROOT'] = goroot;
+	} else {
+		delete process.env.GOROOT;
+	}
 }

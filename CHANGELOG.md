@@ -1,3 +1,82 @@
+## V0.26.0 - 17 Jun, 2021
+
+📣 [`Delve`'s native DAP implementation](https://github.com/golang/vscode-go/blob/master/docs/dlv-dap.md) is now available for use. In order to use this new debug adapter (`dlv-dap`) when debugging Go programs, add the following settings in your `settings.json`:
+
+```json5
+    "go.delveConfig": {
+        "debugAdapter": "dlv-dap",
+    },
+```
+
+Please learn more about [the new adapter's features and configuration parameters](https://github.com/golang/vscode-go/blob/master/docs/dlv-dap.md), and share your feedback and report the issues in our issue tracker.
+
+A list of all issues and changes can be found in the [v0.26.0 milestone](https://github.com/golang/vscode-go/milestone/30?closed=1) and [commit history](https://github.com/golang/vscode-go/compare/v0.25.1...v0.26.0).
+
+### Enhancements
+- `dlv-dap` is ready for use in local debugging.
+- Added the new `"Go: Test Function At Cursor or Test Previous"` command. ([PR 1509](https://github.com/golang/vscode-go/pull/1509))
+- `"Go: Add Imports"` command uses `gopls` instead of `gopkg`. This requires `gopls@v0.7.0` or newer. ([Go Issue 43351](https://github.com/golang/go/issues/43351))
+
+### Fixes
+- Fixed `"Go: Lint Workspace"` that failed no editor is active. ([Issue 1520](https://github.com/golang/vscode-go/issues/1520))
+- Fixed `gopls` crash caused by Untitled files. ([Issue 1559](https://github.com/golang/vscode-go/issues/1559))
+
+### Thanks
+Thanks for your contributions, @mislav, @marwan-at-work, @findleyr, @lggomez, @fflewddur, @suzmue, @hyangah!
+
+## v0.25.1 - 24 May, 2021
+
+A list of all issues and changes can be found in the [v0.25.1 milestone](https://github.com/golang/vscode-go/issues?q=is%3Aissue+milestone%3Av0.25.1+is%3Aclosed).
+
+### Fixes
+- Change the default path separator to `/` when applying `substitutePath` debug configuration. ([Issue 1497](https://github.com/golang/vscode-go/issues/1497))
+- Warn users when `go.goroot` setting is used. ([Issue 1501](https://github.com/golang/vscode-go/issues/1501))
+
+### Enhancements
+- Update to latest version of `dlv-dap`. Some of newest additions to `dlv dap` include optimized function detection, exception info, pause, function breakpoints while running, evaluate over hover, set variables. Documentation of current features and limitations can be found in [the documentation](https://github.com/golang/vscode-go/blob/master/docs/dlv-dap.md).
+- Adjusted feedback survey prompt probability.
+
+### Thanks
+Thanks for the contribution, @suzmue, @fflewddur!
+
+## v0.25.0 - 12 May, 2021
+
+A list of all issues and changes can be found in the
+[v0.25.0 milestone](https://github.com/golang/vscode-go/issues?q=is%3Aissue+milestone%3Av0.25.0+is%3Aclosed).
+
+If you have a feature requests for this extension, please file it through the github issue tracker.
+
+### Enhancements
+- Update to latest version of `dlv-dap`. Documentation of current features and limitations can be found in [the documentation](https://github.com/golang/vscode-go/blob/master/docs/dlv-dap.md)
+- Add debug previous command ([Issue 798](https://github.com/golang/vscode-go/issues/798))
+- Add `Go: Initialize go.mod` command to run `go mod init` in the current workspace folder ([Issue 1449](https://github.com/golang/vscode-go/issues/1449))
+- Use `program` in debug configuration to determine mode in `auto` ([Issue 1422](https://github.com/golang/vscode-go/issues/1422))
+- Auto update `dlv-dap` if autoUpdates enabled ([Issue 1404](https://github.com/golang/vscode-go/issues/1404))
+- Set `editor.suggest.snippetsPreventQuickSuggestions` to false by default to enable code completion and quick suggestions inside a snippet ([Issue 839](https://github.com/golang/vscode-go/issues/839))
+
+### Fixes
+- Set the `GOROOT` to the user specified `GOROOT` in `go.goroot`
+- Fixed missing file bug in debug adapter ([Issue 1447](https://github.com/golang/vscode-go/issues/1447))
+- Fixed inconsistent workpsaceFolder value bug in debug configuration ([Issue 1448](https://github.com/golang/vscode-go/issues/1448))
+- Allow `dlv-dap` to shut down gracefully and clean up debugged process ([Issue 120](https://github.com/golang/vscode-go/issues/120))
+
+### Thanks
+
+Thank you for your contribution, @hyangah, @JadenSimon, @rstambler, @polinasok, @rfindley, and @suzmue!
+
+## v0.24.2 - 19 Apr, 2021
+A list of all issues and changes can be found in the
+[v0.24.2 milestone](https://github.com/golang/vscode-go/issues?q=is%3Aissue+milestone%3Av0.24.2+is%3Aclosed).
+
+### Fixes
+- Fixed regression in the `lintOnSave` feature. ([Issue 1429](https://github.com/golang/vscode-go/issues/1429))
+- Fixed `dlv-dap` installation to correcly use `GOBIN` environment variable. ([Issue 1430](https://github.com/golang/vscode-go/issues/1430))
+- Fixed duplicate error notifications when missing `dlv-dap`. ([Issue 1426](https://github.com/golang/vscode-go/issues/1426))
+
+## Enhancements
+- Updated the minimum required dlv-dap version. The new version includes support for
+[`substitutePath`](https://github.com/golang/vscode-go/blob/master/docs/debugging.md#launch-configurations) and shadowed variable annotation.
+
 ## v0.24.1 - 15 Apr, 2021
 
 ### Enhancements

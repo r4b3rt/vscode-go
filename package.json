@@ -1,7 +1,7 @@
 {
   "name": "go",
   "displayName": "Go",
-  "version": "0.25.0-dev",
+  "version": "0.27.0-dev",
   "preview": true,
   "publisher": "golang",
   "description": "Rich Go language support for Visual Studio Code",
@@ -89,7 +89,6 @@
   "engines": {
     "vscode": "^1.52.0"
   },
-  "requiresWorkspaceTrust": "onStart",
   "activationEvents": [
     "workspaceContains:**/*.go",
     "onLanguage:go",
@@ -103,6 +102,20 @@
     "onWebviewPanel:welcomeGo"
   ],
   "main": "./dist/goMain.js",
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "restrictedConfigurations": [
+        "go.alternateTools",
+        "go.gopath",
+        "go.goroot",
+        "go.inferGopath",
+        "go.toolsGopath",
+        "go.toolsEnvVars"
+      ]
+    }
+  },
   "contributes": {
     "languages": [
       {
@@ -187,6 +200,11 @@
         "command": "go.test.cursor",
         "title": "Go: Test Function At Cursor",
         "description": "Runs a unit test at the cursor."
+      },
+      {
+        "command": "go.test.cursorOrPrevious",
+        "title": "Go: Test Function At Cursor or Test Previous",
+        "description": "Runs a unit test at the cursor if one is found, otherwise re-runs the last executed test."
       },
       {
         "command": "go.subtest.cursor",
@@ -519,23 +537,22 @@
                   "legacy",
                   "dlv-dap"
                 ],
-                "description": "Select which debug adapter to use with this launch configuration",
+                "description": "Select which debug adapter to use with this launch configuration.",
                 "default": "legacy"
               },
               "program": {
                 "type": "string",
-                "description": "Path to the program folder (or any file within that folder) when in 'debug' or 'test' mode, and to the pre-built binary file to debug in 'exec' mode.",
+                "description": "Path to the program folder (or any go file within that folder) when in `debug` or `test` mode, and to the pre-built binary file to debug in `exec` mode. If it is not an absolute path, the extension interpretes it as a workspace relative path.",
                 "default": "${workspaceFolder}"
               },
               "mode": {
                 "enum": [
                   "auto",
                   "debug",
-                  "remote",
                   "test",
                   "exec"
                 ],
-                "description": "One of 'auto', 'debug', 'remote', 'test', 'exec'.",
+                "description": "One of `auto`, `debug`, `test`, `exec`. In `auto` mode, the extension will choose either `debug` or `test` depending on active editor window.",
                 "default": "auto"
               },
               "stopOnEntry": {
@@ -558,8 +575,8 @@
               },
               "cwd": {
                 "type": "string",
-                "description": "Workspace relative or absolute path to the working directory of the program being debugged. Default is the current workspace.",
-                "default": "."
+                "description": "Workspace relative or absolute path to the working directory of the program being debugged if a non-empty value is specified. The `program` folder is used as the working directory if `cwd` is omitted or empty.",
+                "default": ""
               },
               "env": {
                 "type": "object",
@@ -573,17 +590,17 @@
                   "properties": {
                     "from": {
                       "type": "string",
-                      "description": "The absolute local path to be replaced when passing paths to the debugger",
+                      "description": "The absolute local path to be replaced when passing paths to the debugger.",
                       "default": ""
                     },
                     "to": {
                       "type": "string",
-                      "description": "The absolute remote path to be replaced when passing paths back to the client",
+                      "description": "The absolute remote path to be replaced when passing paths back to the client.",
                       "default": ""
                     }
                   }
                 },
-                "description": "An array of mappings from a local path to the remote path that is used by the debuggee. The debug adapter will replace the local path with the remote path in all of the calls. Overriden by remotePath.",
+                "description": "An array of mappings from a local path (editor) to the remote path (debugee). This setting is useful when working in a file system with symbolic links, running remote debugging, or debugging an executable compiled externally. The debug adapter will replace the local path with the remote path in all of the calls.",
                 "default": []
               },
               "buildFlags": {
@@ -591,32 +608,22 @@
                 "description": "Build flags, to be passed to the Go compiler. Maps to dlv's `--build-flags` flag.",
                 "default": ""
               },
-              "init": {
-                "type": "string",
-                "description": "Init file, executed by the terminal client. Maps to dlv's `--init` flag.",
-                "default": ""
-              },
               "dlvFlags": {
                 "type": "array",
-                "description": "Extra flags for `dlv`. See `dlv help` for the full list of supported. Flags such as `--log-output`, `--log`, `--init`, `--api-version`, `--output`, `--backend` already have corresponding properties in the debug configuration, and flags such as `--listen` and `--headless` are used internally. If they are specified in `dlvFlags`, they may be ignored or cause an error.",
+                "description": "Extra flags for `dlv`. See `dlv help` for the full list of supported. Flags such as `--log-output`, `--log`, `--log-dest`, `--api-version`, `--output`, `--backend` already have corresponding properties in the debug configuration, and flags such as `--listen` and `--headless` are used internally. If they are specified in `dlvFlags`, they may be ignored or cause an error.",
                 "items": {
                   "type": "string"
                 },
                 "default": []
               },
-              "remotePath": {
-                "type": "string",
-                "description": "Absolute path to the file being debugged on the remote machine in case of remote debugging. If specified, becomes the first entry in substitutePath.",
-                "default": ""
-              },
               "port": {
                 "type": "number",
-                "description": "The port that the delve debugger will be listening on.",
+                "description": "The port that the delve debugger will be listening on. In `dlv-dap` mode, the extension will look for a delve DAP server running on the specified host:port so users are responsible for starting the server.",
                 "default": 2345
               },
               "host": {
                 "type": "string",
-                "description": "The host name of the machine the delve debugger will be listening on.",
+                "description": "The host name of the machine the delve debugger will be listening on. In `dlv-dap` mode, the extension will look for a delve DAP server running on the specified host:port so users are responsible for starting the server.",
                 "default": "127.0.0.1"
               },
               "trace": {
@@ -630,7 +637,7 @@
                   "error"
                 ],
                 "default": "error",
-                "description": "Various levels of the debug console & 'Go Debug' output channel. When using the `legacy` debug adapter, the logs will also be written to a file if it is set to a value other than `error`."
+                "description": "Various levels of logging shown in the debug console & 'Go Debug' output channel. When using the `legacy` debug adapter, the logs will also be written to a file if it is set to a value other than `error`."
               },
               "envFile": {
                 "type": [
@@ -650,11 +657,11 @@
                   "native",
                   "lldb"
                 ],
-                "description": "Backend used by delve. Only available in delve version 0.12.2 and above."
+                "description": "Backend used by delve. Maps to `dlv`'s `--backend` flag."
               },
               "output": {
                 "type": "string",
-                "description": "Output path for the binary of delve",
+                "description": "Output path for the binary of the debugee.",
                 "default": "debug"
               },
               "logOutput": {
@@ -670,36 +677,40 @@
                 "description": "Comma separated list of components that should produce debug output. Maps to dlv's `--log-output` flag. Check `dlv log` for details.",
                 "default": "debugger"
               },
+              "logDest": {
+                "type": "string",
+                "description": "dlv's `--log-dest` flag. See `dlv log` for details. Number argument is not allowed. Supported only in `dlv-dap` mode, and on Linux and Mac OS."
+              },
               "dlvLoadConfig": {
                 "type": "object",
                 "properties": {
                   "followPointers": {
                     "type": "boolean",
-                    "description": "FollowPointers requests pointers to be automatically dereferenced",
+                    "description": "FollowPointers requests pointers to be automatically dereferenced.",
                     "default": true
                   },
                   "maxVariableRecurse": {
                     "type": "number",
-                    "description": "MaxVariableRecurse is how far to recurse when evaluating nested types",
+                    "description": "MaxVariableRecurse is how far to recurse when evaluating nested types.",
                     "default": 1
                   },
                   "maxStringLen": {
                     "type": "number",
-                    "description": "MaxStringLen is the maximum number of bytes read from a string",
+                    "description": "MaxStringLen is the maximum number of bytes read from a string.",
                     "default": 64
                   },
                   "maxArrayValues": {
                     "type": "number",
-                    "description": "MaxArrayValues is the maximum number of elements read from an array, a slice or a map",
+                    "description": "MaxArrayValues is the maximum number of elements read from an array, a slice or a map.",
                     "default": 64
                   },
                   "maxStructFields": {
                     "type": "number",
-                    "description": "MaxStructFields is the maximum number of fields read from a struct, -1 will read all fields",
+                    "description": "MaxStructFields is the maximum number of fields read from a struct, -1 will read all fields.",
                     "default": -1
                   }
                 },
-                "description": "LoadConfig describes to delve, how to load values from target's memory",
+                "description": "LoadConfig describes to delve, how to load values from target's memory. Not applicable when using `dlv-dap` mode.",
                 "default": {
                   "followPointers": true,
                   "maxVariableRecurse": 1,
@@ -714,12 +725,12 @@
                   1,
                   2
                 ],
-                "description": "Delve Api Version to use. Default value is 2. Maps to dlv's `--api-version` flag.",
+                "description": "Delve Api Version to use. Default value is 2. Maps to dlv's `--api-version` flag. Not applicable when using `dlv-dap` mode.",
                 "default": 2
               },
               "stackTraceDepth": {
                 "type": "number",
-                "description": "Maximum depth of stack trace collected from Delve",
+                "description": "Maximum depth of stack trace collected from Delve.",
                 "default": 50
               },
               "showGlobalVariables": {
@@ -737,7 +748,7 @@
                   "legacy",
                   "dlv-dap"
                 ],
-                "description": "Select which debug adapter to use with this launch configuration",
+                "description": "Select which debug adapter to use with this launch configuration.",
                 "default": "legacy"
               },
               "processId": {
@@ -747,31 +758,35 @@
                       "${command:pickProcess}",
                       "${command:pickGoProcess}"
                     ],
-                    "description": "Use process picker to select a process to attach, or Process ID as integer.",
-                    "default": "${command:pickProcess}"
+                    "description": "Use process picker to select a process to attach, or Process ID as integer."
                   },
                   {
                     "type": "string",
-                    "description": "Attach to a process by name. If more than one process matches the name, use the process picker to select a aprocess.",
-                    "default": ""
+                    "description": "Attach to a process by name. If more than one process matches the name, use the process picker to select a process."
                   },
                   {
                     "type": "number",
-                    "description": "The ID of the process to be debugged."
+                    "description": "The numeric ID of the process to be debugged. If 0, use the process picker to select a process."
                   }
-                ]
+                ],
+                "default": 0
               },
               "mode": {
                 "enum": [
                   "local",
                   "remote"
                 ],
-                "description": "Indicates local or remote debugging. Local maps to the dlv 'attach' command, remote maps to 'connect'.",
+                "description": "Indicates local or remote debugging. Local maps to the `dlv attach` command, remote maps to `connect`. `remote` is not supported in `dlv-dap` mode currently. Use `host` and `port` instead.",
                 "default": "local"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop program after attach.",
+                "default": false
               },
               "dlvFlags": {
                 "type": "array",
-                "description": "Extra flags for `dlv`. See `dlv help` for the full list of supported. Flags such as `--log-output` and `--log` already have corresponding properties in the debug configuration, and flags such as `--listen` and `--headless` are used internally. If they are specified in `dlvFlags`, they may be ignored or cause an error.",
+                "description": "Extra flags for `dlv`. See `dlv help` for the full list of supported. Flags such as `--log-output`, `--log`, `--log-dest`, `--api-version`, `--output`, `--backend` already have corresponding properties in the debug configuration, and flags such as `--listen` and `--headless` are used internally. If they are specified in `dlvFlags`, they may be ignored or cause an error.",
                 "items": {
                   "type": "string"
                 },
@@ -789,17 +804,18 @@
               },
               "remotePath": {
                 "type": "string",
-                "description": "If remote debugging, the path to the source code on the remote machine, if different from the local machine. If specified, becomes the first entry in substitutePath.",
+                "description": "The path to the source code on the remote machine, when the remote path is different from the local machine. If specified, becomes the first entry in substitutePath.",
+                "markdownDeprecationMessage": "Use `substitutePath` instead.",
                 "default": ""
               },
               "port": {
                 "type": "number",
-                "description": "The port that the delve debugger will be listening on.",
+                "description": "The port that the delve debugger will be listening on. In `dlv-dap` mode, the extension will look for a delve DAP server running on the specified host:port so users are responsible for starting the server.",
                 "default": 2345
               },
               "host": {
                 "type": "string",
-                "description": "The host name of the machine the delve debugger will be listening on.",
+                "description": "The host name of the machine the delve debugger will be listening on. In `dlv-dap` mode, the extension will look for a delve DAP server running on the specified host:port so users are responsible for starting the server.",
                 "default": "127.0.0.1"
               },
               "substitutePath": {
@@ -809,28 +825,31 @@
                   "properties": {
                     "from": {
                       "type": "string",
-                      "description": "The absolute local path to be replaced when passing paths to the debugger",
+                      "description": "The absolute local path to be replaced when passing paths to the debugger.",
                       "default": ""
                     },
                     "to": {
                       "type": "string",
-                      "description": "The absolute remote path to be replaced when passing paths back to the client",
+                      "description": "The absolute remote path to be replaced when passing paths back to the client.",
                       "default": ""
                     }
                   }
                 },
-                "description": "An array of mappings from a local path to the remote path that is used by the debuggee. The debug adapter will replace the local path with the remote path in all of the calls.",
+                "description": "An array of mappings from a local path (editor) to the remote path (debugee). This setting is useful when working in a file system with symbolic links, running remote debugging, or debugging an executable compiled externally. The debug adapter will replace the local path with the remote path in all of the calls.  Overriden by `remotePath`.",
                 "default": []
               },
               "trace": {
                 "type": "string",
                 "enum": [
-                  "log",
                   "verbose",
+                  "trace",
+                  "log",
+                  "info",
+                  "warn",
                   "error"
                 ],
                 "default": "error",
-                "description": "Various levels of logging shown in the debug console. When set to 'log' or 'verbose', the logs will also be written to a file."
+                "description": "Various levels of logging shown in the debug console & 'Go Debug' output channel. When using the `legacy` debug adapter, the logs will also be written to a file if it is set to a value other than `error`."
               },
               "backend": {
                 "type": "string",
@@ -839,7 +858,7 @@
                   "native",
                   "lldb"
                 ],
-                "description": "Backend used by delve. Only available in delve version 0.12.2 and above. Maps to dlv's `--backend` flag."
+                "description": "Backend used by delve. Maps to `dlv`'s `--backend` flag."
               },
               "logOutput": {
                 "type": "string",
@@ -853,6 +872,10 @@
                 ],
                 "description": "Comma separated list of components that should produce debug output. Maps to dlv's `--log-output` flag. Check `dlv log` for details.",
                 "default": "debugger"
+              },
+              "logDest": {
+                "type": "string",
+                "description": "dlv's `--log-dest` flag. See `dlv log` for details. Number argument is not allowed. Supported only in `dlv-dap` mode and on Linux and Mac OS."
               },
               "dlvLoadConfig": {
                 "type": "object",
@@ -883,7 +906,7 @@
                     "default": -1
                   }
                 },
-                "description": "LoadConfig describes to delve, how to load values from target's memory",
+                "description": "LoadConfig describes to delve, how to load values from target's memory. Not applicable when using `dlv-dap` mode.",
                 "default": {
                   "followPointers": true,
                   "maxVariableRecurse": 1,
@@ -898,12 +921,12 @@
                   1,
                   2
                 ],
-                "description": "Delve Api Version to use. Default value is 2.",
+                "description": "Delve Api Version to use. Default value is 2. Not applicable when using `dlv-dap` mode.",
                 "default": 2
               },
               "stackTraceDepth": {
                 "type": "number",
-                "description": "Maximum depth of stack trace collected from Delve",
+                "description": "Maximum depth of stack trace collected from Delve.",
                 "default": 50
               },
               "showGlobalVariables": {
@@ -1693,7 +1716,7 @@
                   "default": -1
                 }
               },
-              "description": "LoadConfig describes to delve, how to load values from target's memory",
+              "description": "LoadConfig describes to delve, how to load values from target's memory. Ignored by 'dlv-dap'.",
               "default": {
                 "followPointers": true,
                 "maxVariableRecurse": 1,
@@ -1724,6 +1747,26 @@
               ],
               "description": "Select which debug adapter to use by default. This is also used for choosing which debug adapter to use when no launch.json is present and with codelenses.",
               "default": "legacy"
+            },
+            "substitutePath": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "The absolute local path to be replaced when passing paths to the debugger",
+                    "default": ""
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "The absolute remote path to be replaced when passing paths back to the client",
+                    "default": ""
+                  }
+                }
+              },
+              "description": "An array of mappings from a local path to the remote path that is used by the debuggee. The debug adapter will replace the local path with the remote path in all of the calls. Overriden by `remotePath` (in attach request).",
+              "default": []
             }
           },
           "default": {
@@ -1736,7 +1779,8 @@
             },
             "apiVersion": 2,
             "showGlobalVariables": false,
-            "debugAdapter": "legacy"
+            "debugAdapter": "legacy",
+            "substitutePath": []
           },
           "description": "Delve settings that applies to all debugging sessions. Debug configuration in the launch.json file will override these values.",
           "scope": "resource"
@@ -1799,7 +1843,7 @@
             },
             "build.directoryFilters": {
               "type": "array",
-              "markdownDescription": "directoryFilters can be used to exclude unwanted directories from the\nworkspace. By default, all directories are included. Filters are an\noperator, `+` to include and `-` to exclude, followed by a path prefix\nrelative to the workspace folder. They are evaluated in order, and\nthe last filter that applies to a path controls whether it is included.\nThe path prefix can be empty, so an initial `-` excludes everything.\n\nExamples:\nExclude node_modules: `-node_modules`\nInclude only project_a: `-` (exclude everything), `+project_a`\nInclude only project_a, but not node_modules inside it: `-`, `+project_a`, `-project_a/node_modules`\n",
+              "markdownDescription": "directoryFilters can be used to exclude unwanted directories from the\nworkspace. By default, all directories are included. Filters are an\noperator, `+` to include and `-` to exclude, followed by a path prefix\nrelative to the workspace folder. They are evaluated in order, and\nthe last filter that applies to a path controls whether it is included.\nThe path prefix can be empty, so an initial `-` excludes everything.\n\nExamples:\n\nExclude node_modules: `-node_modules`\n\nInclude only project_a: `-` (exclude everything), `+project_a`\n\nInclude only project_a, but not node_modules inside it: `-`, `+project_a`, `-project_a/node_modules`\n",
               "scope": "resource"
             },
             "build.env": {
@@ -1819,10 +1863,30 @@
               "default": true,
               "scope": "resource"
             },
+            "build.experimentalTemplateSupport": {
+              "type": "boolean",
+              "markdownDescription": "(Experimental) experimentalTemplateSupport opts into the experimental support\nfor template files.\n",
+              "default": false,
+              "scope": "resource"
+            },
             "build.experimentalWorkspaceModule": {
               "type": "boolean",
               "markdownDescription": "(Experimental) experimentalWorkspaceModule opts a user into the experimental support\nfor multi-module workspaces.\n",
               "default": false,
+              "scope": "resource"
+            },
+            "build.memoryMode": {
+              "type": "string",
+              "markdownDescription": "(Experimental) memoryMode controls the tradeoff `gopls` makes between memory usage and\ncorrectness.\n\nValues other than `Normal` are untested and may break in surprising ways.\n",
+              "enum": [
+                "DegradeClosed",
+                "Normal"
+              ],
+              "markdownEnumDescriptions": [
+                "`\"DegradeClosed\"`: In DegradeClosed mode, `gopls` will collect less information about\npackages without open files. As a result, features like Find\nReferences and Rename will miss results in such packages.\n",
+                ""
+              ],
+              "default": "Normal",
               "scope": "resource"
             },
             "formatting.gofumpt": {
@@ -1888,7 +1952,7 @@
             "ui.completion.experimentalPostfixCompletions": {
               "type": "boolean",
               "markdownDescription": "(Experimental) experimentalPostfixCompletions enables artifical method snippets\nsuch as \"someSlice.sort!\".\n",
-              "default": false,
+              "default": true,
               "scope": "resource"
             },
             "ui.completion.matcher": {
@@ -1975,7 +2039,7 @@
                 },
                 "fieldalignment": {
                   "type": "boolean",
-                  "markdownDescription": "find structs that would take less memory if their fields were sorted\n\nThis analyzer find structs that can be rearranged to take less memory, and provides\na suggested edit with the optimal order.\n",
+                  "markdownDescription": "find structs that would use less memory if their fields were sorted\n\nThis analyzer find structs that can be rearranged to use less memory, and provides\na suggested edit with the optimal order.\n\nNote that there are two different diagnostics reported. One checks struct size,\nand the other reports \"pointer bytes\" used. Pointer bytes is how many bytes of the\nobject that the garbage collector has to potentially scan for pointers, for example:\n\n\tstruct { uint32; string }\n\nhave 16 pointer bytes because the garbage collector has to scan up through the string's\ninner pointer.\n\n\tstruct { string; *uint32 }\n\nhas 24 pointer bytes because it has to scan further through the *uint32.\n\n\tstruct { string; uint32 }\n\nhas 8 because it can stop immediately after the string pointer.\n",
                   "default": false
                 },
                 "fillreturns": {

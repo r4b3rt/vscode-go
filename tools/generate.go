@@ -17,9 +17,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -28,18 +30,41 @@ import (
 )
 
 var (
-	writeFlag               = flag.Bool("w", true, "Write new file contents to disk.")
-	updateGoplsSettingsFlag = flag.Bool("gopls", false, "Update gopls settings in package.json. This is disabled by default because 'jq' tool is needed for generation.")
+	writeFlag                    = flag.Bool("w", true, "Write new file contents to disk.")
+	updateGoplsSettingsFlag      = flag.Bool("gopls", false, "Update gopls settings in package.json. This is disabled by default because 'jq' tool is needed for generation.")
+	updateLatestToolVersionsFlag = flag.Bool("tools", false, "Update the latest versions of tools in src/src/goToolsInformation.ts. This is disabled by default because the latest versions may change frequently and should not block a release.")
 
 	debugFlag = flag.Bool("debug", false, "If true, enable extra logging and skip deletion of intermediate files.")
 )
+
+func checkAndWrite(filename string, oldContent, newContent []byte) {
+	// Return early if the contents are unchanged.
+	if bytes.Equal(oldContent, newContent) {
+		return
+	}
+
+	// Either write out new contents or report an error (if in CI).
+	if *writeFlag {
+		if err := ioutil.WriteFile(filename, newContent, 0644); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("updated %s\n", filename)
+	} else {
+		base := filepath.Join("docs", filepath.Base(filename))
+		fmt.Printf(`%s have changed in the package.json, but documentation in %s was not updated.
+To update the settings, run "go run tools/generate.go -w".
+`, strings.TrimSuffix(base, ".md"), base)
+		os.Exit(1) // causes CI to break.
+	}
+}
 
 type PackageJSON struct {
 	Contributes struct {
 		Commands      []Command `json:"commands,omitempty"`
 		Configuration struct {
-			Properties map[string]Property `json:"properties,omitempty"`
+			Properties map[string]*Property `json:"properties,omitempty"`
 		} `json:"configuration,omitempty"`
+		Debuggers []Debugger `json:"debuggers,omitempty"`
 	} `json:"contributes,omitempty"`
 }
 
@@ -53,16 +78,38 @@ type Property struct {
 	name string `json:"name,omitempty"` // Set by us.
 
 	// Below are defined in package.json
-	Properties                 map[string]interface{} `json:"properties,omitempty"`
-	Default                    interface{}            `json:"default,omitempty"`
-	MarkdownDescription        string                 `json:"markdownDescription,omitempty"`
-	Description                string                 `json:"description,omitempty"`
-	MarkdownDeprecationMessage string                 `json:"markdownDeprecationMessage,omitempty"`
-	DeprecationMessage         string                 `json:"deprecationMessage,omitempty"`
-	Type                       interface{}            `json:"type,omitempty"`
-	Enum                       []interface{}          `json:"enum,omitempty"`
-	EnumDescriptions           []string               `json:"enumDescriptions,omitempty"`
-	MarkdownEnumDescriptions   []string               `json:"markdownEnumDescriptions,omitempty"`
+	Properties                 map[string]*Property `json:"properties,omitempty"`
+	AnyOf                      []Property           `json:"anyOf,omitempty"`
+	Default                    interface{}          `json:"default,omitempty"`
+	MarkdownDescription        string               `json:"markdownDescription,omitempty"`
+	Description                string               `json:"description,omitempty"`
+	MarkdownDeprecationMessage string               `json:"markdownDeprecationMessage,omitempty"`
+	DeprecationMessage         string               `json:"deprecationMessage,omitempty"`
+	Type                       interface{}          `json:"type,omitempty"`
+	Enum                       []interface{}        `json:"enum,omitempty"`
+	EnumDescriptions           []string             `json:"enumDescriptions,omitempty"`
+	MarkdownEnumDescriptions   []string             `json:"markdownEnumDescriptions,omitempty"`
+	Items                      *Property            `json:"items,omitempty"`
+}
+
+type Debugger struct {
+	Type                    string `json:"type,omitempty"`
+	Label                   string `json:"label,omitempty"`
+	ConfigurationAttributes struct {
+		Launch Configuration
+		Attach Configuration
+	} `json:"configurationAttributes,omitempty"`
+}
+
+type Configuration struct {
+	Properties map[string]*Property `json:"properties,omitempty"`
+}
+
+type moduleVersion struct {
+	Path     string   `json:",omitempty"`
+	Version  string   `json:",omitempty"`
+	Time     string   `json:",omitempty"`
+	Versions []string `json:",omitempty"`
 }
 
 func main() {
@@ -105,32 +152,25 @@ func main() {
 		if len(split) == 1 {
 			log.Fatalf("expected to find %q in %s, not found", gen, filename)
 		}
-		s := bytes.Join([][]byte{
-			bytes.TrimSpace(split[0]),
-			gen,
-			toAdd,
-		}, []byte("\n\n"))
-		newContent := append(s, '\n')
-
-		// Return early if the contents are unchanged.
-		if bytes.Equal(oldContent, newContent) {
-			return
-		}
-
-		// Either write out new contents or report an error (if in CI).
-		if *writeFlag {
-			if err := ioutil.WriteFile(filename, newContent, 0644); err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("updated %s\n", filename)
+		var s []byte
+		if strings.HasSuffix(filename, ".ts") {
+			s = bytes.Join([][]byte{
+				split[0],
+				gen,
+				[]byte("\n\n"),
+				toAdd,
+			}, []byte{})
 		} else {
-			base := filepath.Join("docs", filepath.Base(filename))
-			fmt.Printf(`%s have changed in the package.json, but documentation in %s was not updated.
-To update the settings, run "go run tools/generate.go -w".
-`, strings.TrimSuffix(base, ".md"), base)
-			os.Exit(1) // causes CI to break.
+			s = bytes.Join([][]byte{
+				bytes.TrimSpace(split[0]),
+				gen,
+				toAdd,
+			}, []byte("\n\n"))
 		}
+		newContent := append(s, '\n')
+		checkAndWrite(filename, oldContent, newContent)
 	}
+
 	b := &bytes.Buffer{}
 	for i, c := range pkgJSON.Contributes.Commands {
 		fmt.Fprintf(b, "### `%s`\n\n%s", c.Title, c.Description)
@@ -143,8 +183,8 @@ To update the settings, run "go run tools/generate.go -w".
 	// Clear so that we can rewrite settings.md.
 	b.Reset()
 
-	var properties []Property
-	var goplsProperty Property
+	var properties []*Property
+	var goplsProperty *Property
 	for name, p := range pkgJSON.Contributes.Configuration.Properties {
 		p.name = name
 		if name == "gopls" {
@@ -177,9 +217,92 @@ To update the settings, run "go run tools/generate.go -w".
 	writeGoplsSettingsSection(b, goplsProperty)
 
 	rewrite(filepath.Join(dir, "docs", "settings.md"), b.Bytes())
+
+	b.Reset()
+	generateDebugConfigTable(b, pkgJSON)
+	rewriteDebugDoc(filepath.Join(dir, "docs", "dlv-dap.md"), b.Bytes())
+
+	// Only update the latest tool versions if the flag is set.
+	if !*updateLatestToolVersionsFlag {
+		return
+	}
+
+	// Clear so that we can rewrite src/goToolsInformation.ts.
+	b.Reset()
+
+	// Check for latest dlv-dap version.
+	dlvVersion, err := listModuleVersion("github.com/go-delve/delve@master")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Check for the latest gopls version.
+	versions, err := listAllModuleVersions("golang.org/x/tools/gopls")
+	if err != nil {
+		log.Fatal(err)
+	}
+	latestIndex := len(versions.Versions) - 1
+	latestPre := versions.Versions[latestIndex]
+	// We need to find the last version that was not a pre-release.
+	var latest string
+	for latest = versions.Versions[latestIndex]; latestIndex >= 0; latestIndex-- {
+		if !strings.Contains(latest, "pre") {
+			break
+		}
+	}
+
+	goplsVersion, err := listModuleVersion(fmt.Sprintf("golang.org/x/tools/gopls@%s", latest))
+	if err != nil {
+		log.Fatal(err)
+	}
+	goplsVersionPre, err := listModuleVersion(fmt.Sprintf("golang.org/x/tools/gopls@%s", latestPre))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	allToolsFile := filepath.Join(dir, "tools", "allTools.ts.in")
+
+	// Find the package.json file.
+	data, err = ioutil.ReadFile(allToolsFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO(suzmue): change input to json and avoid magic string printing.
+	toolsString := fmt.Sprintf(string(data), goplsVersion.Version, goplsVersion.Time[:len("YYYY-MM-DD")], goplsVersionPre.Version, goplsVersionPre.Time[:len("YYYY-MM-DD")], dlvVersion.Version, dlvVersion.Time[:len("YYYY-MM-DD")])
+
+	// Write tools section.
+	b.WriteString(toolsString)
+	rewrite(filepath.Join(dir, "src", "goToolsInformation.ts"), b.Bytes())
 }
 
-func writeProperty(b *bytes.Buffer, heading string, p Property) {
+func listModuleVersion(path string) (moduleVersion, error) {
+	output, err := exec.Command("go", "list", "-m", "-json", path).Output()
+	if err != nil {
+		return moduleVersion{}, err
+	}
+	var version moduleVersion
+	err = json.Unmarshal(output, &version)
+	if err != nil {
+		return moduleVersion{}, err
+	}
+	return version, nil
+}
+
+func listAllModuleVersions(path string) (moduleVersion, error) {
+	output, err := exec.Command("go", "list", "-m", "-json", "-versions", path).Output()
+	if err != nil {
+		return moduleVersion{}, err
+	}
+	var version moduleVersion
+	err = json.Unmarshal(output, &version)
+	if err != nil {
+		return moduleVersion{}, err
+	}
+	return version, nil
+}
+
+func writeProperty(b *bytes.Buffer, heading string, p *Property) {
 	desc := p.Description
 	if p.MarkdownDescription != "" {
 		desc = p.MarkdownDescription
@@ -215,7 +338,7 @@ func writeProperty(b *bytes.Buffer, heading string, p Property) {
 	}
 }
 
-func defaultDescriptionSnippet(p Property) string {
+func defaultDescriptionSnippet(p *Property) string {
 	if p.Default == nil {
 		return ""
 	}
@@ -236,11 +359,7 @@ func defaultDescriptionSnippet(p Property) string {
 			fmt.Fprintf(b, "%v", p.Default)
 		}
 	default:
-		if _, ok := p.Type.([]interface{}); ok {
-			fmt.Fprintf(b, "%v", p.Default)
-			break
-		}
-		log.Fatalf("implement default when p.Type is %q in %#v %T", p.Type, p, p.Default)
+		fmt.Fprintf(b, "%v", p.Default)
 	}
 	return b.String()
 }
@@ -269,7 +388,7 @@ func writeMapObject(b *bytes.Buffer, indent string, obj map[string]interface{}) 
 	fmt.Fprintf(b, "%v}", indent)
 }
 
-func writeGoplsSettingsSection(b *bytes.Buffer, goplsProperty Property) {
+func writeGoplsSettingsSection(b *bytes.Buffer, goplsProperty *Property) {
 	desc := goplsProperty.MarkdownDescription
 	b.WriteString(desc)
 	b.WriteString("\n\n")
@@ -282,58 +401,14 @@ func writeGoplsSettingsSection(b *bytes.Buffer, goplsProperty Property) {
 	sort.Strings(names)
 
 	for _, name := range names {
-		pdata, ok := properties[name].(map[string]interface{})
-		if !ok {
-			fmt.Fprintf(b, "### `%s`\n", name)
-			continue
-		}
-		p := mapToProperty(name, pdata)
+		p := properties[name]
+		p.name = name
 		writeProperty(b, "###", p)
 		b.WriteString("\n")
 	}
 }
 
-func mapToProperty(name string, pdata map[string]interface{}) Property {
-	p := Property{name: name}
-
-	if v, ok := pdata["properties"].(map[string]interface{}); ok {
-		p.Properties = v
-	}
-	if v, ok := pdata["markdownDescription"].(string); ok {
-		p.MarkdownDescription = v
-	}
-	if v, ok := pdata["description"].(string); ok {
-		p.Description = v
-	}
-	if v, ok := pdata["markdownDeprecationMessage"].(string); ok {
-		p.MarkdownDescription = v
-	}
-	if v, ok := pdata["deprecationMessage"].(string); ok {
-		p.DeprecationMessage = v
-	}
-	if v, ok := pdata["type"].(string); ok {
-		p.Type = v
-	}
-	if v, ok := pdata["enum"].([]interface{}); ok {
-		p.Enum = v
-	}
-	if v, ok := pdata["enumDescriptions"].([]interface{}); ok {
-		for _, d := range v {
-			p.EnumDescriptions = append(p.EnumDescriptions, d.(string))
-		}
-	}
-	if v, ok := pdata["markdownEnumDescriptions"].([]interface{}); ok {
-		for _, d := range v {
-			p.MarkdownEnumDescriptions = append(p.MarkdownEnumDescriptions, d.(string))
-		}
-	}
-	if v, ok := pdata["default"]; ok {
-		p.Default = v
-	}
-	return p
-}
-
-func writeSettingsObjectProperties(b *bytes.Buffer, properties map[string]interface{}) {
+func writeSettingsObjectProperties(b *bytes.Buffer, properties map[string]*Property) {
 	if len(properties) == 0 {
 		return
 	}
@@ -351,12 +426,8 @@ func writeSettingsObjectProperties(b *bytes.Buffer, properties map[string]interf
 		if i == len(names)-1 {
 			ending = ""
 		}
-		pdata, ok := properties[name].(map[string]interface{})
-		if !ok {
-			fmt.Fprintf(b, "| `%s` |   |%v", name, ending)
-			continue
-		}
-		p := mapToProperty(name, pdata)
+		p := properties[name]
+		p.name = name
 
 		desc := p.Description
 		if p.MarkdownDescription != "" {
@@ -389,7 +460,7 @@ func writeSettingsObjectProperties(b *bytes.Buffer, properties map[string]interf
 }
 
 // enumDescriptionsSnippet returns the snippet for the allowed values.
-func enumDescriptionsSnippet(p Property) string {
+func enumDescriptionsSnippet(p *Property) string {
 	b := &bytes.Buffer{}
 	if len(p.Enum) == 0 {
 		return ""
@@ -486,4 +557,131 @@ func updateGoplsSettings(oldData []byte, packageJSONFile string, debug bool) (ne
 		return nil, err
 	}
 	return newData, nil
+}
+
+func rewriteDebugDoc(filename string, toAdd []byte) {
+	oldContent, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	startSep := []byte(`<!-- SETTINGS BEGIN -->`)
+	endSep := []byte(`<!-- SETTINGS END -->`)
+	startIdx := bytes.Index(oldContent, startSep)
+	endIdx := bytes.Index(oldContent, endSep)
+	if startIdx <= 0 || endIdx <= startIdx {
+		log.Fatalf("Missing valid SETTINGS BEGIN/END markers in %v", filename)
+	}
+	part1 := oldContent[:startIdx+len(startSep)+1]
+	part3 := oldContent[endIdx:]
+
+	newContent := bytes.Join([][]byte{
+		part1,
+		toAdd,
+		part3,
+	}, []byte{})
+	checkAndWrite(filename, oldContent, newContent)
+}
+
+func generateDebugConfigTable(w io.Writer, pkgJSON *PackageJSON) {
+	for _, d := range pkgJSON.Contributes.Debuggers {
+		table := map[string]bool{}
+
+		for k := range d.ConfigurationAttributes.Attach.Properties {
+			table[k] = true
+		}
+		for k := range d.ConfigurationAttributes.Launch.Properties {
+			table[k] = true
+		}
+
+		keys := make([]string, 0, len(table))
+		for k := range table {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		fmt.Fprintln(w, "| Property | Launch | Attach |")
+		fmt.Fprintln(w, "| --- | --- | --- |")
+
+		for _, k := range keys {
+			launch := describeDebugProperty(d.ConfigurationAttributes.Launch.Properties[k])
+			attach := describeDebugProperty(d.ConfigurationAttributes.Attach.Properties[k])
+
+			if launch != "" && attach != "" {
+				if launch != attach {
+					fmt.Fprintf(w, "| `%v` | %v | %v |\n", k, launch, attach)
+				} else {
+					fmt.Fprintf(w, "| `%v` | %v | <center>_same as Launch_</center>|\n", k, launch)
+				}
+			} else if launch != "" {
+				fmt.Fprintf(w, "| `%v` | %v | <center>_n/a_</center> |\n", k, launch)
+			} else if attach != "" {
+				fmt.Fprintf(w, "| `%v` | <center>_n/a_</center> | %v |\n", k, attach)
+			}
+		}
+	}
+}
+
+func describeDebugProperty(p *Property) string {
+	if p == nil {
+		return ""
+	}
+	b := &bytes.Buffer{}
+
+	desc := p.Description
+	if p.MarkdownDescription != "" {
+		desc = p.MarkdownDescription
+	}
+	if p == nil || strings.Contains(desc, "Not applicable when using `dlv-dap` mode.") {
+		return ""
+	}
+
+	deprecation := p.DeprecationMessage
+	if p.MarkdownDeprecationMessage != "" {
+		deprecation = p.MarkdownDeprecationMessage
+	}
+
+	if deprecation != "" {
+		fmt.Fprintf(b, "(Deprecated) *%v*<br/>", deprecation)
+	}
+	fmt.Fprintf(b, "%v<br/>", desc)
+
+	if len(p.AnyOf) > 0 {
+		for i, a := range p.AnyOf {
+			fmt.Fprintf(b, "<p><b>Option %d:</b> %v<br/>", i+1, describeDebugProperty(&a))
+		}
+	}
+
+	if len(p.Enum) > 0 {
+		var enums []string
+		for _, i := range p.Enum {
+			enums = append(enums, fmt.Sprintf("`%#v`", i))
+		}
+		fmt.Fprintf(b, "<p>Allowed Values: %v<br/>", strings.Join(enums, ", "))
+	}
+
+	if p.Type == "object" && len(p.Properties) > 0 {
+
+		var keys []string
+		for k := range p.Properties {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		fmt.Fprintf(b, "<ul>")
+
+		for _, k := range keys {
+			v := p.Properties[k]
+			fmt.Fprintf(b, "<li>`%q`: %v</li>", k, describeDebugProperty(v))
+		}
+		fmt.Fprintf(b, "</ul>")
+	}
+
+	if p.Type == "array" && p.Items != nil && p.Items.Type == "object" {
+		fmt.Fprintf(b, "<p>%v<br/>", describeDebugProperty(p.Items))
+	}
+
+	// Default
+	if d := defaultDescriptionSnippet(p); d != "" {
+		fmt.Fprintf(b, "(Default: `%v`)<br/>", d)
+	}
+	return b.String()
 }
