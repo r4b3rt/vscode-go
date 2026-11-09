@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
 
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # Modification copyright 2020 The Go Authors. All rights reserved.
@@ -11,7 +12,6 @@ Available subcommands:
   help      - display this help message.
   test      - build and test locally. Some tests may fail if vscode is already in use.
   testlocal - build and test in a locally built container.
-  setup_env - setup environment for test. This installs tools under GOPATH/bin.
   ci        - build and test with headless vscode. Requires Xvfb.
 EOUSAGE
 }
@@ -36,94 +36,53 @@ setup_virtual_display() {
 
 go_binaries_info() {
   echo "**** Go version ****"
-  which go
   go version
-  echo "**** Gopls version ****"
-  go version -m "$(which gopls)"
+  df -h | grep shm
+}
+
+run_doc_test() {
+  echo "**** Run settings generator ****"
+  go run -C extension ./tools/generate.go -w=false -gopls=true
 }
 
 run_test() {
-  echo "**** Run test ****"
+  pushd .
+  cd "$(root_dir)/extension"
+  echo "**** Test build ****"
   npm ci
   npm run compile
+
+  echo "**** Run Go tests ****"
+  VSCODE_GO_TEST_ALL="true" go test ./...
+
+  echo "**** Run test ****"
   npm run unit-test
   npm test --silent
+  popd
+}
+
+run_lint() {
+  pushd .
+  cd "$(root_dir)/extension"
+  echo "**** Run lint ****"
   npm run lint
-
-  echo "**** Run settings generator ****"
-  go run tools/generate.go -w=false -gopls=true
-
-  echo "**** Check if vsce works ****"
-  vsce package
+  popd
 }
 
 run_test_in_docker() {
+  local docker_cmd="docker"
+  if ! command -v docker &> /dev/null && command -v podman &> /dev/null; then
+    docker_cmd="podman"
+  fi
   echo "**** Building the docker image ***"
-  docker build -t vscode-test-env ${GOVERSION:+ --build-arg GOVERSION="${GOVERSION}"} -f ./build/Dockerfile .
+  "${docker_cmd}" build -t vscode-test-env ${GOVERSION:+ --build-arg GOVERSION="${GOVERSION}"} -f ./build/Dockerfile .
 
   # For debug tests, we need ptrace.
-  docker run --cap-add SYS_PTRACE --workdir=/workspace -v "$(pwd):/workspace" vscode-test-env ci
-}
-
-prepare_nightly() {
-  # Version format: YYYY.MM.DDHH based on the latest commit timestamp.
-  # e.g. 2020.1.510 is the version built based on a commit that was made
-  #      on 2020/01/05 10:00
-  local VER=`git log -1 --format=%cd --date="format:%Y.%-m.%-d%H"`
-  local COMMIT=`git log -1 --format=%H`
-  echo "**** Preparing nightly release : $VER ***"
-
-  # Update package.json
-  (cat package.json | jq --arg VER "${VER}" '
-.version=$VER |
-.preview=true |
-.name="go-nightly" |
-.displayName="Go Nightly" |
-.publisher="golang" |
-.description="Rich Go language support for Visual Studio Code (Nightly)" |
-.contributes.configuration.properties."go.useLanguageServer".default=true
-') > /tmp/package.json && mv /tmp/package.json package.json
-
-  # Replace CHANGELOG.md with CHANGELOG.md + Release commit info.
-  printf "**Release ${VER} @ ${COMMIT}** \n\n" | cat - CHANGELOG.md > /tmp/CHANGELOG.md.new && mv /tmp/CHANGELOG.md.new CHANGELOG.md
-  # Replace the heading of README.md with the heading for Go Nightly.
-  sed '/^# Go for Visual Studio Code$/d' README.md | cat build/nightly/README.md - > /tmp/README.md.new && mv /tmp/README.md.new README.md
-  # Replace src/const.ts with build/nightly/const.ts.
-  cp build/nightly/const.ts src/const.ts
-}
-
-# setup dependencies required for tests.
-install_dependencies() {
-	# TARGET is where `go get` will output the compiled binaries.
-	local GOPATHS=`go env GOPATH`
-	local TARGET="${GOBIN}"
-	if [[ -z "${GOBIN}" ]]; then TARGET="${GOPATHS%%:*}/bin" ; fi
-
-	GO111MODULE=on go install golang.org/x/tools/gopls@latest
-	GO111MODULE=on go install github.com/acroca/go-symbols@latest
-	GO111MODULE=on go install github.com/cweill/gotests/gotests@latest
-	GO111MODULE=on go install github.com/davidrjenni/reftools/cmd/fillstruct@latest
-	GO111MODULE=on go install github.com/haya14busa/goplay/cmd/goplay@latest
-
-	# We install two versions of gocode, one for module mode (gocode-gomod)
-	# and another for GOPATH mode (gocode).
-	GO111MODULE=on go install github.com/stamblerre/gocode@latest && mv "${TARGET}/gocode" "${TARGET}/gocode-gomod"
-	GO111MODULE=on go install github.com/mdempsky/gocode@latest
-
-	GO111MODULE=on go install github.com/ramya-rao-a/go-outline@latest
-	GO111MODULE=on go install github.com/rogpeppe/godef@latest
-	GO111MODULE=on go install github.com/sqs/goreturns@latest
-	GO111MODULE=on go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest
-	GO111MODULE=on go install github.com/zmb3/gogetdoc@latest
-	GO111MODULE=on go install honnef.co/go/tools/cmd/staticcheck@latest
-	GO111MODULE=on go install golang.org/x/tools/cmd/gorename@latest
-
-	GO111MODULE=on go install github.com/go-delve/delve/cmd/dlv@master && cp "${TARGET}/dlv" "${TARGET}/dlv-dap"
-	GO111MODULE=on go install github.com/go-delve/delve/cmd/dlv@latest
+  "${docker_cmd}" run --cap-add SYS_PTRACE --shm-size=8G --workdir=/workspace vscode-test-env ci
 }
 
 main() {
-  cd "$(root_dir)"  # always run from the script root.
+  cd "$(root_dir)"  # always start to run from the extension source root.
   case "$1" in
     "help"|"-h"|"--help")
       usage
@@ -139,13 +98,9 @@ main() {
     "ci")
       go_binaries_info
       setup_virtual_display
+	    run_doc_test
       run_test
-      ;;
-    "prepare_nightly")
-      prepare_nightly
-      ;;
-    "setup_env")
-      install_dependencies
+	    run_lint
       ;;
     *)
       usage

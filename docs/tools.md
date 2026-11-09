@@ -2,7 +2,7 @@
 
 This document describes the tools that power the VS Code Go extension.
 
-Tools will be installed by default when you install the extension. You can also manually install or update all of these tools by running the [`Go: Install/Update Tools`](commands.md#go-installupdate-tools) command. If any tools are missing, you will see an `Analysis Tools Missing` warning in the bottom-right corner of the editor, which will prompt you to install these tools.
+Tools will be installed by default when you install the extension. You can also manually install or update all of these tools by running the [`Go: Install/Update Tools`](commands.md#go-installupdate-tools) command. The extension uses pinned versions of command-line tools. See the pinned versions in tools information [here](https://github.com/golang/vscode-go/blob/master/extension/src/goToolsInformation.ts). If any tools are missing, you will see an `Analysis Tools Missing` warning in the bottom-right corner of the editor, which will prompt you to install these tools.
 
 VS Code Go will install the tools to your `$GOPATH/bin` by default. 
 
@@ -18,7 +18,7 @@ The extension checks for the availability of the new Go release by periodically 
 ### [`gopls`]
 [`gopls`] is the official Go [language server](https://langserver.org/) developed by the Go team. It is the default backend for most of this extension's IntelliSense, code navigation, code editing, and diagnostics features. When the extension starts, it spawns a `gopls` instance in server mode for each VS Code project.
 
-`gopls` uses the `go` command to analyze your code. The extension automatically propagates necessary settings such as  `"go.buildFlags"`, `"go.buildTags"`, `"go.toolsEnvVars"` and the path to the right `go` command to `gopls`. No extra settings should be necessary, but when you need to adjust `gopls`'s behavior further (e.g., enable more advanced analysis features), please see [all the settings for `gopls`](https://github.com/golang/vscode-go/blob/master/docs/settings.md#settings-for-gopls).
+`gopls` uses the `go` command to analyze your code. The extension automatically propagates necessary settings such as  `"go.buildFlags"`, `"go.buildTags"`, `"go.toolsEnvVars"` and the path to the right `go` command to `gopls`. No extra settings should be necessary, but when you need to adjust `gopls`'s behavior further (e.g., enable more advanced analysis features), please see [all the settings for `gopls`](settings.md#settings-for-gopls).
 
 If you encounter issues with `gopls`, please read the [troubleshooting guide](troubleshooting.md#collect-gopls-information). If you want to run the extension without the language server, you can disable it by setting `"go.useLanguageServer": false`.
 
@@ -35,28 +35,20 @@ This extension uses Delve for its debug/test functionalities. The extension curr
 
 For a comprehensive overview of how to debug your Go programs, please see the [debugging guide](./debugging.md).
 
-### [`dlv-dap`](https://github.com/go-delve/delve)
-This extension requires an unstable version of [`dlv`](#dlv) when users opt in to use Delve's native DAP implementation. `dlv-dap` is a `dlv` built from the master, which includes unreleased features. Please see the documentation about [Dlv DAP - Delve's Native DAP implementation](./dlv-dap.md) for details.
+### [`vscgo`](https://pkg.go.dev/github.com/golang/vscode-go/vscgo)
 
-### [`gopkgs`](https://pkg.go.dev/github.com/uudashr/gopkgs?tab=overview)
-
-This tool provides autocompletion for unimported packages. Replacement of `gopkgs` with [`gopls`] is a work-in-progress. <!--TODO: reference to the issue-->
-
-### [`go-outline`](https://pkg.go.dev/github.com/ramya-rao-a/go-outline?tab=overview)
-
-This tool provides the information needed to compute the various test code lenses. It will be replaced with [`gopls`]. <!--TODO: reference to the issue-->
+This tool provides utilities needed by this extension but do not belong to the language server
+or debug adapter server. Examples include dependency tools management, developer survey
+configuration, and [Go telemetry collection](https://github.com/golang/vscode-go/issues/3121).
+This tool is released with the extension and installed in the extension's directory.
 
 ### [`goplay`](https://pkg.go.dev/github.com/haya14busa/goplay?tab=overview)
 
 This tool provides support for the [`Go: Run on Go Playground`](features.md#go-playground) command.
 
-### [`gomodifytags`](https://pkg.go.dev/github.com/fatih/gomodifytags?tab=overview)
-
-This tool provides support for the [`Go: Add Tags to Struct Fields`](features.md#add-or-remove-struct-tags) and [`Go: Remove Tags From Struct Fields`](features.md#add-or-remove-struct-tags) commands.
-
 ### [`impl`](https://github.com/josharian/impl)
 
-This tool provides support for the [`Go: Generate Interface Stubs`](features.md#generate-interface-implementation) command.
+This tool provides support for the legacy [`Go: Generate Interface Stubs (legacy)`](features.md#generate-interface-implementation) command.
 
 ### [`gotests`](https://github.com/cweill/gotests/)
 
@@ -68,13 +60,15 @@ This is the default lint tool. See the [full list of checks](https://staticcheck
 Other options include:
 
   * [`golangci-lint`]: This meta-linter combines a number of existing lint tools, including [staticcheck](#staticcheck), into one interface.
+  * [`golangci-lint-v2`]: golangci-lint but v2.
   * [`revive`]: This tool is an enhancement on top of [`golint`], and it provides additional checks.
   * [`golint`]: This used to be the default linter used by this extension before it was officially deprecated.
 
 You can use the [`"go.lintFlags"`](settings.md#go.lintFlags) setting to further configure your linter of choice. Most linters can be configured via special configuration files, but you may still need to pass these command-line flags. The configuration documentation for each supported linter is listed here:
 
 * [`staticcheck`](https://staticcheck.io/docs/#configuration)
-* [`golangci-lint`](https://golangci-lint.run/usage/configuration/)
+* [`golangci-lint`](https://golangci.github.io/legacy-v1-doc/usage/configuration/)
+* [`golangci-lint-v2`](https://golangci-lint.run/docs/configuration/cli/)
 * [`revive`](https://github.com/mgechev/revive#command-line-flags)
 
 #### Examples
@@ -94,53 +88,13 @@ Configure `revive` to exclude `vendor` directories and apply extra configuration
 ]
 ```
 
-### Misc tools used in the legacy mode
-
-When `gopls` cannot be used, the extension falls back to the legacy mode. Be aware that many of these tools may be incompatible with the recent versions of Go or do not work in Modules mode.
-
-* [`go-outline`](https://pkg.go.dev/github.com/ramya-rao-a/go-outline?tab=overview):
-In the legacy mode, this tool provides the `[document outline](features.md#document-outline) feature` and the [go to symbol](features.md#go-to-symbol) in the current file feature.
-
-* `gocode`: code completion in the legacy mode is provided by `gocode`. Different versions of `gocode` are used depending on your version of Go.
-  * Go 1.9 and above: [mdempsky/gocode](https://github.com/mdempsky/gocode)
-  * Go 1.11 and above, with modules enabled: [stamblerre/gocode](https://github.com/stamblerre/gocode), named `gocode-gomod` internally.
-
-* [`go-symbols`](https://pkg.go.dev/github.com/acroca/go-symbols?tab=overview): provides the [go to symbol](features.md#go-to-symbol) in workspace feature.
-
-* [`guru`](https://pkg.go.dev/golang.org/x/tools/cmd/guru?tab=doc): provides the [find references](features.md#find-references) and [find interface implementations](features.md#find-interface-implementations) features.
-It can also be used to provide the [go to definition](features.md#go-to-definition) via the [`"go.docsTool"`](settings.md#go.docsTool) setting. `guru` does not support Go modules.
-
-* [`gorename`](https://pkg.go.dev/golang.org/x/tools/cmd/gorename?tab=doc): provides the [rename symbol](features.md#rename-symbol) feature. `gorename` does not have support for Go modules
-
-* [`godoctor`](https://github.com/godoctor/godoctor): provides the [refactoring](features.md#refactor) features. It does not support Go modules, and we expect that [`gopls`] will provide this feature instead ([golang/go#37170](https://github.com/golang/go/issues/37170)).
-
-* [`fillstruct`](https://github.com/davidrjenni/reftools/tree/master/cmd/fillstruct): provides support the [`Go: Fill struct`](features.md#fill-struct-literals) command.
-
-* [`gogetdoc`], [`godef`], [`godoc`]: these are documentation tools used for the [go to definition](features.md#go-to-definition), [signature help](features.md#signature-help), and [quick info on hover](features.md#quick-info-on-hover) in the legacy mode. [`guru`](#guru) can also be used, but only for the [go to definition](features.md#go-to-definition) behavior. Configure this via the [`"go.docsTool"`](settings.md#go.docsTool) setting.
-
-* [`goimports`], [`gofmt`]: Formatting tools are used by the [formatting and import organization](features.md#format-and-organize-imports) features. [`goreturns`] is used by default in the legacy mode. It formats the file according to the industry standard [`gofmt`] style, organizes imports, and fills in default return values for functions. Other tools can be used for formatting instead; this can be configured with the [`"go.go.formatTool"`](settings.md#formatTool) setting.
-
-  * [`gofmt`] only formats the file, without import organization or filling in return values
-  * [`goformat`] is a configurable version of [`gofmt`]
-  * [`goreturns`] fills in default return values for functions, in addition to applying `goimports`-style formatting. This tool does not have support for Go modules.
-
-* Diagnostics tools: By default, [`gotype-live`], [`go vet`], and [`golint`] are used to provide [build](features.md#build-errors), [vet](features.md#vet-errors), and [lint](features.md#lint-errors) errors. [`gotype-live`] provides build errors as you type, while `go build` can be used to show build errors only on save. [`gotype-live`] does not work with modules.
-
-
-
-[`gogetdoc`]: https://pkg.go.dev/github.com/zmb3/gogetdoc?tab=overview
-[`godef`]: https://pkg.go.dev/github.com/rogpeppe/godef?tab=doc
-[`godoc`]: https://pkg.go.dev/golang.org/x/tools/godoc?tab=doc
-[`goreturns`]: https://pkg.go.dev/github.com/sqs/goreturns?tab=overview
 [`goimports`]: https://pkg.go.dev/golang.org/x/tools/cmd/goimports?tab=doc
 [`gofmt`]: https://golang.org/cmd/gofmt/
-[`goformat`]: https://pkg.go.dev/winterdrache.de/goformat?tab=overview
-[`gotype-live`]: https://pkg.go.dev/github.com/tylerb/gotype-live?tab=doc
 [`golint`]: https://pkg.go.dev/golang.org/x/lint/golint?tab=overview
 [`staticcheck`]: https://pkg.go.dev/honnef.co/go/tools/staticcheck?tab=overview
-[`golangci-lint`]: https://golangci-lint.run/
+[`golangci-lint`]: https://golangci.github.io/legacy-v1-doc/
+[`golangci-lint-v2`]: https://golangci-lint.run/
 [`revive`]: https://pkg.go.dev/github.com/mgechev/revive?tab=overview
-[`go vet`]: https://golang.org/cmd/vet/
 [`gopls`]: https://golang.org/s/gopls
 [`go`]: https://golang.org/cmd/go
 

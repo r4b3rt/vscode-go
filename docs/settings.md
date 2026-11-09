@@ -4,7 +4,7 @@ This extension is highly configurable, and as such, offers a number of settings.
 
 To navigate to your settings, open the Command Palette (Ctrl+Shift+P or Cmd+Shift+P) and search for "settings". The simplest way to modify your settings is through "Preferences: Open Settings (UI)".
 
-For tuning the features provided by `gopls`, see the [section](https://github.com/golang/vscode-go/blob/master/docs/settings.md#settings-for-gopls) for `gopls` settings.
+For tuning the features provided by `gopls`, see the [section](settings.md#settings-for-gopls) for `gopls` settings.
 
 ## Latest changes
 
@@ -19,7 +19,7 @@ To view the list of settings:
 
 ## Security
 
-This extension runs a few [third-party command-line tools](tools.md) found from the locations determined by the `PATH` or `Path` environment variable, and the settings such as `"go.alternateTools"` or `"go.toolsGopath"`. Configuring them in workspace settings allows users to conveniently select a different set of tools based on project's need, but also allows attackers to run arbitrary binaries on your machine if they successfuly convince you to open a random repository. In order to reduce the security risk, the extension reads those settings from user settings by default. If the repository can be trusted and workspace settings must be used, you can mark the workspace as a trusted workspace using the `"Go: Toggle Workspace Trust Flag"` command.
+This extension runs a few [third-party command-line tools](tools.md) found from the locations determined by the `PATH` or `Path` environment variable, and the settings such as `"go.alternateTools"` or `"go.toolsGopath"`. Configuring them in workspace settings allows users to conveniently select a different set of tools based on project's need, but also allows attackers to run arbitrary binaries on your machine if they successfully convince you to open a random repository. In order to reduce the security risk, the extension reads those settings from user settings by default. If the repository can be trusted and workspace settings must be used, you can mark the workspace as a trusted workspace using the `"Go: Toggle Workspace Trust Flag"` command.
 
 ## Detailed list
 
@@ -27,46 +27,41 @@ This extension runs a few [third-party command-line tools](tools.md) found from 
 
 ### `go.addTags`
 
-Tags and options configured here will be used by the Add Tags command to add tags to struct fields. If promptForTags is true, then user will be prompted for tags and options. By default, json tags are added.
+Tags and options configured here will be used by the Add Tags command to add tags to struct fields. If promptForTags is true, or if neither tags nor options are configured, the user will be prompted for tags and the transformation rule.
 | Properties | Description |
 | --- | --- |
-| `options` | Comma separated tag=options pairs to be used by Go: Add Tags command <br/> Default: `"json=omitempty"` |
-| `promptForTags` | If true, Go: Add Tags command will prompt the user to provide tags, options, transform values instead of using the configured values <br/> Default: `false` |
-| `tags` | Comma separated tags to be used by Go: Add Tags command <br/> Default: `"json"` |
+| `options` | Comma separated tag=options pairs to be used by Go: Add Tags command <br/> Default: `""` |
+| `promptForTags` | If true, Go: Add Tags command will always prompt the user to provide tags, options, and transform values instead of using the configured values <br/> Default: `false` |
+| `tags` | Comma separated tags to be used by Go: Add Tags command <br/> Default: `""` |
 | `template` | Custom format used by Go: Add Tags command for the tag value to be applied <br/> Default: `""` |
-| `transform` | Transformation rule used by Go: Add Tags command to add tags <br/> Allowed Options: `snakecase`, `camelcase`, `lispcase`, `pascalcase`, `keep` <br/> Default: `"snakecase"` |
+| `transform` | Transformation rule used by Go: Add Tags command to add tags. Defaults to snakecase if empty. <br/> Allowed Options: `snakecase`, `camelcase`, `lispcase`, `pascalcase`, `keep` <br/> Default: `""` |
 
 Default:
 ```
 {
-	"options" :	"json=omitempty",
+	"options" :	"",
 	"promptForTags" :	false,
-	"tags" :	"json",
+	"tags" :	"",
 	"template" :	"",
-	"transform" :	"snakecase",
+	"transform" :	"",
 }
 ```
 ### `go.alternateTools`
 
-Alternate tools or alternate paths for the same tools used by the Go extension. Provide either absolute path or the name of the binary in GOPATH/bin, GOROOT/bin or PATH. Useful when you want to use wrapper script for the Go tools or versioned tools from https://gopkg.in. When specified as a workspace setting, the setting is used only when the workspace is marked trusted with "Go: Toggle Workspace Trust Flag".
+Alternate tools or alternate paths for the same tools used by the Go extension. Provide either absolute path or the name of the binary in GOPATH/bin, GOROOT/bin or PATH. Useful when you want to use wrapper script for the Go tools.
 | Properties | Description |
 | --- | --- |
+| `customFormatter` | Custom formatter to use instead of the language server. This should be used with the `custom` option in `#go.formatTool#`. <br/> Default: `""` |
 | `dlv` | Alternate tool to use instead of the dlv binary or alternate path to use for the dlv binary. <br/> Default: `"dlv"` |
 | `go` | Alternate tool to use instead of the go binary or alternate path to use for the go binary. <br/> Default: `"go"` |
-| `go-outline` | Alternate tool to use instead of the go-outline binary or alternate path to use for the go-outline binary. <br/> Default: `"go-outline"` |
-| `gopkgs` | Alternate tool to use instead of the gopkgs binary or alternate path to use for the gopkgs binary. <br/> Default: `"gopkgs"` |
 | `gopls` | Alternate tool to use instead of the gopls binary or alternate path to use for the gopls binary. <br/> Default: `"gopls"` |
-### `go.autocompleteUnimportedPackages`
-
-Include unimported packages in auto-complete suggestions. Not applicable when using the language server.
-
-Default: `false`
 ### `go.buildFlags`
 
 Flags to `go build`/`go test` used during build-on-save or running tests. (e.g. ["-ldflags='-s'"]) This is propagated to the language server if `gopls.build.buildFlags` is not specified.
-### `go.buildOnSave`
+### `go.buildOnSave (deprecated)`
 
-Compiles code on file save using 'go build' or 'go test -c'. Options are 'workspace', 'package', or 'off'.  Not applicable when using the language server's diagnostics. See 'go.languageServerExperimentalFeatures.diagnostics' setting.<br/>
+Enable the Go language server (`#go.useLanguageServer#`) to diagnose compile errors.
+Compiles code on file save using 'go build' or 'go test -c'. Not applicable when using the language server.<br/>
 Allowed Options: `package`, `workspace`, `off`
 
 Default: `"package"`
@@ -142,39 +137,34 @@ Default: `"showBothCoveredAndUncoveredCode"`
 Delve settings that applies to all debugging sessions. Debug configuration in the launch.json file will override these values.
 | Properties | Description |
 | --- | --- |
-| `apiVersion` | Delve Api Version to use. Default value is 2. <br/> Allowed Options: `1`, `2` <br/> Default: `2` |
+| `apiVersion` | Delve Api Version to use. Default value is 2. This applies only when using the 'legacy' debug adapter. <br/> Allowed Options: `1`, `2` <br/> Default: `2` |
 | `debugAdapter` | Select which debug adapter to use by default. This is also used for choosing which debug adapter to use when no launch.json is present and with codelenses. <br/> Allowed Options: `legacy`, `dlv-dap` <br/> Default: `"dlv-dap"` |
+| `dlvFlags` | Extra flags for `dlv`. See `dlv help` for the full list of supported. Flags such as `--log-output`, `--log`, `--log-dest`, `--api-version`, `--output`, `--backend` already have corresponding properties in the debug configuration, and flags such as `--listen` and `--headless` are used internally. If they are specified in `dlvFlags`, they may be ignored or cause an error. |
 | `dlvLoadConfig` | LoadConfig describes to delve, how to load values from target's memory. Ignored by 'dlv-dap'. <br/> Default: ``` { <pre>"followPointers" :	true,<br/>"maxArrayValues" :	64,<br/>"maxStringLen" :	64,<br/>"maxStructFields" :	-1,<br/>"maxVariableRecurse" :	1,</pre>} ``` |
+| `hideSystemGoroutines` | Boolean value to indicate whether system goroutines should be hidden from call stack view. <br/> Default: `false` |
+| `logOutput` | Comma separated list of components that should produce debug output. Maps to dlv's `--log-output` flag. Check `dlv log` for details. <br/> Allowed Options: `debugger`, `gdbwire`, `lldbout`, `debuglineerr`, `rpc`, `dap` <br/> Default: `"debugger"` |
 | `showGlobalVariables` | Boolean value to indicate whether global package variables should be shown in the variables pane or not. <br/> Default: `false` |
-| `substitutePath` | An array of mappings from a local path to the remote path that is used by the debuggee. The debug adapter will replace the local path with the remote path in all of the calls. Overriden by `remotePath` (in attach request). |
+| `showLog` | Show log output from the delve debugger. Maps to dlv's `--log` flag. <br/> Default: `false` |
+| `showRegisters` | Boolean value to indicate whether register variables should be shown in the variables pane or not. <br/> Default: `false` |
+| `substitutePath` | An array of mappings from a local path to the remote path that is used by the debuggee. The debug adapter will replace the local path with the remote path in all of the calls. Overridden by `remotePath` (in attach request). |
+### `go.diagnostic.vulncheck`
 
-Default:
-```
-{
-	"apiVersion" :	2,
-	"debugAdapter" :	"legacy",
-	"dlvLoadConfig" :		{
-		"followPointers" :	true,
-		"maxArrayValues" :	64,
-		"maxStringLen" :	64,
-		"maxStructFields" :	-1,
-		"maxVariableRecurse" :	1,
-	},
-	"showGlobalVariables" :	false,
-	"substitutePath" :	[],
-}
-```
+(Experimental) vulncheck enables vulnerability scanning.
+<br/>
+Allowed Options:
+
+* `Imports`: `"Imports"`: In Imports mode, `gopls` will report vulnerabilities that affect packages
+directly and indirectly used by the analyzed main module.
+* `Off`: `"Off"`: Disable vulnerability analysis.
+* `Prompt`: `"Prompt"`: Vulncheck can be triggered via prompt.
+
+
+Default: `"Prompt"`
 ### `go.disableConcurrentTests`
 
 If true, tests will not run concurrently. When a new test run is started, the previous will be cancelled.
 
 Default: `false`
-### `go.docsTool`
-
-Pick 'godoc' or 'gogetdoc' to get documentation. Not applicable when using the language server.<br/>
-Allowed Options: `godoc`, `gogetdoc`, `guru`
-
-Default: `"godoc"`
 ### `go.editorContextMenuCommands`
 
 Experimental Feature: Enable/Disable entries from the context menu in the editor.
@@ -182,15 +172,17 @@ Experimental Feature: Enable/Disable entries from the context menu in the editor
 | --- | --- |
 | `addImport` | If true, adds command to import a package to the editor context menu <br/> Default: `true` |
 | `addTags` | If true, adds command to add configured tags from struct fields to the editor context menu <br/> Default: `true` |
-| `benchmarkAtCursor` | If true, adds command to benchmark the test under the cursor to the editor context menu <br/> Default: `true` |
-| `debugTestAtCursor` | If true, adds command to debug the test under the cursor to the editor context menu <br/> Default: `true` |
+| `benchmarkAtCursor` | If true, adds command to benchmark the test under the cursor to the editor context menu <br/> Default: `false` |
+| `compilerDetails` | If true, adds command to show compiler optimization details under the cursor to the editor context menu <br/> Default: `false` |
+| `debugTestAtCursor` | If true, adds command to debug the test under the cursor to the editor context menu <br/> Default: `false` |
 | `fillStruct` | If true, adds command to fill struct literal with default values to the editor context menu <br/> Default: `true` |
 | `generateTestForFile` | If true, adds command to generate unit tests for current file to the editor context menu <br/> Default: `true` |
 | `generateTestForFunction` | If true, adds command to generate unit tests for function under the cursor to the editor context menu <br/> Default: `true` |
-| `generateTestForPackage` | If true, adds command to generate unit tests for currnt package to the editor context menu <br/> Default: `true` |
+| `generateTestForPackage` | If true, adds command to generate unit tests for current package to the editor context menu <br/> Default: `true` |
+| `implCursor` | If true, adds command to generate interface stubs to the editor context menu <br/> Default: `true` |
 | `playground` | If true, adds command to upload the current file or selection to the Go Playground <br/> Default: `true` |
 | `removeTags` | If true, adds command to remove configured tags from struct fields to the editor context menu <br/> Default: `true` |
-| `testAtCursor` | If true, adds command to run the test under the cursor to the editor context menu <br/> Default: `true` |
+| `testAtCursor` | If true, adds command to run the test under the cursor to the editor context menu <br/> Default: `false` |
 | `testCoverage` | If true, adds command to run test coverage to the editor context menu <br/> Default: `true` |
 | `testFile` | If true, adds command to run all tests in the current file to the editor context menu <br/> Default: `true` |
 | `testPackage` | If true, adds command to run all tests in the current package to the editor context menu <br/> Default: `true` |
@@ -202,11 +194,13 @@ Default:
 	"addImport" :	true,
 	"addTags" :	true,
 	"benchmarkAtCursor" :	false,
+	"compilerDetails" :	false,
 	"debugTestAtCursor" :	true,
 	"fillStruct" :	false,
 	"generateTestForFile" :	false,
 	"generateTestForFunction" :	true,
 	"generateTestForPackage" :	false,
+	"implCursor" :	true,
 	"playground" :	true,
 	"removeTags" :	false,
 	"testAtCursor" :	true,
@@ -221,14 +215,25 @@ Default:
 Feature level setting to enable/disable code lens for references and run/debug tests
 | Properties | Description |
 | --- | --- |
-| `references` | If true, enables the references code lens. Uses guru. Recalculates when there is change to the document followed by scrolling. Unnecessary when using the language server; use the call graph feature instead. <br/> Default: `false` |
 | `runtest` | If true, enables code lens for running and debugging tests <br/> Default: `true` |
 
 Default:
 ```
 {
-	"references" :	false,
 	"runtest" :	true,
+}
+```
+### `go.experiments`
+
+Disable experimental features. These features are only available in the pre-release version.
+| Properties | Description |
+| --- | --- |
+| `testExplorer` | Prefer the experimental test explorer <br/> Default: `true` |
+
+Default:
+```
+{
+	"testExplorer" :	true,
 }
 ```
 ### `go.formatFlags`
@@ -236,59 +241,132 @@ Default:
 Flags to pass to format tool (e.g. ["-s"]). Not applicable when using the language server.
 ### `go.formatTool`
 
-Not applicable when using the language server. Choosing 'goimports', 'goreturns', or 'gofumports' will add missing imports and remove unused imports.<br/>
+Specifies the tool for formatting Go code. The default is `default`, which uses the language server `gopls` as formatting provider. To configure gopls's formatting, see the 'gopls.formatting' settings. When a specific tool (e.g., `gofmt`, `goimports`) is selected, the extension will run it instead.<br/>
 Allowed Options:
 
-* `default`: If the language server is enabled, format via the language server, which already supports gofmt, goimports, goreturns, and gofumpt. Otherwise, goimports.
-* `gofmt`: Formats the file according to the standard Go style.
-* `goimports`: Organizes imports and formats the file with gofmt.
-* `goformat`: Configurable gofmt, see https://github.com/mbenkmann/goformat.
-* `gofumpt`: Stricter version of gofmt, see https://github.com/mvdan/gofumpt.
-* `gofumports`: Applies gofumpt formatting and organizes imports.
+* `default`: Formatting is performed by the language server, gopls. (recommended)
+* `gofmt`: Formats using `gofmt`, the standard Go formatter. See https://pkg.go.dev/cmd/gofmt.
+* `goimports`: Formats using `goimports`, which organizes imports and applies `gofmt`. See https://pkg.go.dev/golang.org/x/tools/cmd/goimports.
+* `goformat`: Formats using `goformat`, a configurable version of `gofmt`. See https://github.com/mbenkmann/goformat. (Deprecated due to lack of generics support)
+* `gofumpt`: Formats using `gofumpt`, a stricter version of `gofmt`. See https://github.com/mvdan/gofumpt. Note: `gopls` can also be configured to use `gofumpt` via the `#gopls.formatting.gofumpt#` setting.
+* `custom`: Formats using a custom tool. The tool's path must be specified in the `#go.alternateTools#` setting under the `customFormatter` key.
 
 
 Default: `"default"`
 ### `go.generateTestsFlags`
 
 Additional command line flags to pass to `gotests` for generating tests.
-### `go.gocodeAutoBuild`
-
-Enable gocode's autobuild feature. Not applicable when using the language server.
-
-Default: `false`
-### `go.gocodeFlags`
-
-Additional flags to pass to gocode. Not applicable when using the language server.
-
-Default: `[-builtin -ignore-case -unimported-packages]`
-### `go.gocodePackageLookupMode`
-
-Used to determine the Go package lookup rules for completions by gocode. Only applies when using nsf/gocode. Latest versions of the Go extension uses mdempsky/gocode by default. Not applicable when using the language server.<br/>
-Allowed Options: `go`, `gb`, `bzl`
-
-Default: `"go"`
 ### `go.gopath`
 
-Specify GOPATH here to override the one that is set as environment variable. The inferred GOPATH from workspace root overrides this, if go.inferGopath is set to true. When specified as a workspace setting, the setting is used only when the workspace is marked trusted with "Go: Toggle Workspace Trust Flag".
+Specify GOPATH here to override the one that is set as environment variable. The inferred GOPATH from workspace root overrides this, if go.inferGopath is set to true.
 ### `go.goroot`
 
-Specifies the GOROOT to use when no environment variable is set. When specified as a workspace setting, the setting is used only when the workspace is marked trusted with "Go: Toggle Workspace Trust Flag".
-### `go.gotoSymbol.ignoreFolders`
-
-Folder names (not paths) to ignore while using Go to Symbol in Workspace feature. Not applicable when using the language server.
-### `go.gotoSymbol.includeGoroot`
-
-If false, the standard library located at $GOROOT will be excluded while using the Go to Symbol in File feature. Not applicable when using the language server.
-
-Default: `false`
-### `go.gotoSymbol.includeImports`
-
-If false, the import statements will be excluded while using the Go to Symbol in File feature. Not applicable when using the language server.
-
-Default: `false`
+Specifies the GOROOT to use when no environment variable is set.
 ### `go.inferGopath`
 
-Infer GOPATH from the workspace root. This is ignored when using Go Modules. When specified as a workspace setting, the setting is used only when the workspace is marked trusted with "Go: Toggle Workspace Trust Flag".
+Infer GOPATH from the workspace root. This is ignored when using Go Modules.
+
+Default: `false`
+### `go.inlayHints.assignVariableTypes`
+
+`"assignVariableTypes"` controls inlay hints for variable types in assign statements:
+```go
+	i« int», j« int» := 0, len(r)-1
+```
+
+
+Default: `false`
+### `go.inlayHints.compositeLiteralFields`
+
+`"compositeLiteralFields"` inlay hints for composite literal field names:
+```go
+	Point2D{«X: »1, «Y: »2}
+
+	Outer{«Embedded.»Field: 0}
+```
+
+
+Default: `false`
+### `go.inlayHints.compositeLiteralTypes`
+
+`"compositeLiteralTypes"` controls inlay hints for composite literal types:
+```go
+	for _, c := range []struct {
+		in, want string
+	}{
+		«struct{ in string; want string }»{"Hello, world", "dlrow ,olleH"},
+	}
+```
+
+
+Default: `false`
+### `go.inlayHints.constantValues`
+
+`"constantValues"` controls inlay hints for constant values:
+```go
+	const (
+		KindNone   Kind = iota« = 0»
+		KindPrint«  = 1»
+		KindPrintf« = 2»
+		KindErrorf« = 3»
+	)
+```
+
+
+Default: `false`
+### `go.inlayHints.functionTypeParameters`
+
+`"functionTypeParameters"` inlay hints for implicit type parameters on generic functions:
+```go
+	myFoo«[int, string]»(1, "hello")
+```
+
+
+Default: `false`
+### `go.inlayHints.ignoredError`
+
+`"ignoredError"` inlay hints for implicitly discarded errors:
+```go
+	f.Close()« // ignore error»
+```
+This check inserts an `// ignore error` hint following any
+statement that is a function call whose error result is
+implicitly ignored.
+
+To suppress the hint, write an actual comment containing
+one of the following strings:
+```
+ignore error
+discard error
+can't fail
+cannot fail
+```
+following the call statement, or explicitly assign the
+result to a blank variable.
+
+A handful of common functions such as `fmt.Println` are
+excluded from the check.
+
+
+Default: `false`
+### `go.inlayHints.parameterNames`
+
+`"parameterNames"` controls inlay hints for parameter names:
+```go
+	parseInt(« str: » "123", « radix: » 8)
+```
+
+
+Default: `false`
+### `go.inlayHints.rangeVariableTypes`
+
+`"rangeVariableTypes"` controls inlay hints for variable types in range statements:
+```go
+	for k« int», v« string» := range []string{} {
+		fmt.Println(k, v)
+	}
+```
+
 
 Default: `false`
 ### `go.installDependenciesWhenBuilding`
@@ -296,19 +374,6 @@ Default: `false`
 If true, then `-i` flag will be passed to `go build` everytime the code is compiled. Since Go 1.10, setting this may be unnecessary unless you are in GOPATH mode and do not use the language server.
 
 Default: `false`
-### `go.languageServerExperimentalFeatures`
-
-Temporary flag to enable/disable diagnostics from the language server. This setting will be deprecated soon. Please see and response to [Issue 50](https://github.com/golang/vscode-go/issues/50).
-| Properties | Description |
-| --- | --- |
-| `diagnostics` | If true, the language server will provide build, vet errors and the extension will ignore the `buildOnSave`, `vetOnSave` settings. <br/> Default: `true` |
-
-Default:
-```
-{
-	"diagnostics" :	true,
-}
-```
 ### `go.languageServerFlags`
 
 Flags like -rpc.trace and -logfile to be used while running the language server.
@@ -318,36 +383,30 @@ Flags to pass to Lint tool (e.g. ["-min_confidence=.8"])
 ### `go.lintOnSave`
 
 Lints code on file save using the configured Lint tool. Options are 'file', 'package', 'workspace' or 'off'.<br/>
-Allowed Options: `file`, `package`, `workspace`, `off`
+Allowed Options:
+
+* `file`: lint the current file on file saving
+* `package`: lint the current package on file saving
+* `workspace`: lint all the packages in the current workspace root folder on file saving
+* `off`: do not run lint automatically
+
 
 Default: `"package"`
 ### `go.lintTool`
 
-Specifies Lint tool name.<br/>
-Allowed Options: `staticcheck`, `golint`, `golangci-lint`, `revive`
+Specifies an additional client-side linting tool that should be run by the Go extension. By default (unset), no additional linter is run. This feature is additional to diagnostics reported by the language server, gopls. Since Gopls incorporates the entire staticcheck analyzer suite, it is typically unnecessary to run the staticcheck tool as well. To configure gopls's linting, see the 'gopls.ui.diagnostic' settings.<br/>
+Allowed Options:
 
-Default: `"staticcheck"`
-### `go.liveErrors`
+* `staticcheck`: Run `staticcheck`.
+* `golint`: Run `golint`.
+* `golangci-lint`: Run `golangci-lint` v1.
+* `golangci-lint-v2`: Run `golangci-lint` v2.
+* `revive`: Run `revive`.
 
-Use gotype on the file currently being edited and report any semantic or syntactic errors found after configured delay. Not applicable when using the language server.
-| Properties | Description |
-| --- | --- |
-| `delay` | The number of milliseconds to delay before execution. Resets with each keystroke. <br/> Default: `500` |
-| `enabled` | If true, runs gotype on the file currently being edited and reports any semantic or syntactic errors found. Disabled when the language server is enabled. <br/> Default: `false` |
+### `go.logging.level (deprecated)`
 
-Default:
-```
-{
-	"delay" :	500,
-	"enabled" :	false,
-}
-```
-### `go.logging.level`
+This setting is deprecated. Use 'Developer: Set Log Level...' command to control logging level instead.
 
-The logging level the extension logs at, defaults to 'error'<br/>
-Allowed Options: `off`, `error`, `info`, `verbose`
-
-Default: `"error"`
 ### `go.playground`
 
 The flags configured here will be passed through to command `goplay`
@@ -367,12 +426,12 @@ Default:
 ```
 ### `go.removeTags`
 
-Tags and options configured here will be used by the Remove Tags command to remove tags to struct fields. If promptForTags is true, then user will be prompted for tags and options. By default, all tags and options will be removed.
+Tags and options configured here will be used by the Remove Tags command to remove tags from struct fields. If promptForTags is true, or if neither tags nor options are configured, the user will be prompted for tags.
 | Properties | Description |
 | --- | --- |
-| `options` | Comma separated tag=options pairs to be used by Go: Remove Tags command <br/> Default: `"json=omitempty"` |
-| `promptForTags` | If true, Go: Remove Tags command will prompt the user to provide tags and options instead of using the configured values <br/> Default: `false` |
-| `tags` | Comma separated tags to be used by Go: Remove Tags command <br/> Default: `"json"` |
+| `options` | Comma separated tag=options pairs to be used by Go: Remove Tags command <br/> Default: `""` |
+| `promptForTags` | If true, Go: Remove Tags command will always prompt the user to provide tags and options instead of using the configured values <br/> Default: `false` |
+| `tags` | Comma separated tags to be used by Go: Remove Tags command <br/> Default: `""` |
 
 Default:
 ```
@@ -382,6 +441,21 @@ Default:
 	"tags" :	"",
 }
 ```
+### `go.showWelcome`
+
+Specifies whether to show the Welcome experience on first install
+
+Default: `true`
+### `go.survey.prompt`
+
+Prompt for surveys, including the gopls survey and the Go developer survey.
+
+Default: `true`
+### `go.tasks.provideDefault`
+
+enable the default go build/test task provider.
+
+Default: `true`
 ### `go.terminal.activateEnvironment`
 
 Apply the Go & PATH environment variables used by the extension to all integrated terminals.
@@ -393,6 +467,37 @@ Absolute path to a file containing environment variables definitions. File conte
 ### `go.testEnvVars`
 
 Environment variables that will be passed to the process that runs the Go tests
+### `go.testExplorer.alwaysRunBenchmarks`
+
+Run benchmarks when running all tests in a file or folder.
+
+Default: `false`
+### `go.testExplorer.concatenateMessages`
+
+Concatenate all test log messages for a given location into a single message.
+
+Default: `true`
+### `go.testExplorer.enable`
+
+Enable the Go test explorer
+
+Default: `true`
+### `go.testExplorer.packageDisplayMode`
+
+Present packages in the test explorer flat or nested.<br/>
+Allowed Options: `flat`, `nested`
+
+Default: `"flat"`
+### `go.testExplorer.showDynamicSubtestsInEditor`
+
+Set the source location of dynamically discovered subtests to the location of the containing function. As a result, dynamically discovered subtests will be added to the gutter test widget of the containing function.
+
+Default: `false`
+### `go.testExplorer.showOutput`
+
+Open the test output terminal when a test run is started.
+
+Default: `true`
 ### `go.testFlags`
 
 Flags to pass to `go test`. If null, then buildFlags will be used. This is not propagated to the language server.
@@ -411,10 +516,10 @@ Specifies the timeout for go test in ParseDuration format.
 Default: `"30s"`
 ### `go.toolsEnvVars`
 
-Environment variables that will be passed to the tools that run the Go tools (e.g. CGO_CFLAGS)
+Environment variables that will be passed to the tools that run the Go tools (e.g. CGO_CFLAGS) and debuggee process launched by Delve. Format as string key:value pairs. When debugging, merged with `envFile` and `env` values with precedence `env` > `envFile` > `go.toolsEnvVars`.
 ### `go.toolsGopath`
 
-Location to install the Go tools that the extension depends on if you don't want them in your GOPATH. When specified as a workspace setting, the setting is used only when the workspace is marked trusted with "Go: Toggle Workspace Trust Flag".
+Location to install the Go tools that the extension depends on if you don't want them in your GOPATH.
 ### `go.toolsManagement.autoUpdate`
 
 Automatically update the tools used by the extension, without prompting the user.
@@ -431,40 +536,34 @@ Allowed Options:
 
 
 Default: `"proxy"`
+### `go.toolsManagement.go`
+
+The path to the `go` binary used to install the Go tools. If it's empty, the same `go` binary chosen for the project will be used for tool installation.
+
+Default: `""`
 ### `go.trace.server`
 
-Trace the communication between VS Code and the Go language server.<br/>
+Trace the communication between VS Code and the Go language server. Also requires setting the 'gopls' output channel log level to 'Trace' ('Developer: Set Log Level...').<br/>
 Allowed Options: `off`, `messages`, `verbose`
 
 Default: `"off"`
-### `go.useCodeSnippetsOnFunctionSuggest`
-
-Complete functions with their parameter signature, including the variable type. Not propagated to the language server.
-
-Default: `false`
-### `go.useCodeSnippetsOnFunctionSuggestWithoutType`
-
-Complete functions with their parameter signature, excluding the variable types. Use `gopls.usePlaceholders` when using the language server.
-
-Default: `false`
-### `go.useGoProxyToCheckForToolUpdates (deprecated)`
-
-Use `go.toolsManagement.checkForUpdates` instead.
-When enabled, the extension automatically checks the Go proxy if there are updates available for Go and the Go tools (at present, only gopls) it depends on and prompts the user accordingly
-
-Default: `true`
 ### `go.useLanguageServer`
 
-Use the Go language server "gopls" from Google for powering language features like code navigation, completion, refactoring, formatting & diagnostics.
+Enable intellisense, code navigation, refactoring, formatting & diagnostics for Go. The features are powered by the Go language server "gopls".
 
 Default: `true`
 ### `go.vetFlags`
 
-Flags to pass to `go tool vet` (e.g. ["-all", "-shadow"])
+Flags to pass to `go tool vet` (e.g. ["-all", "-shadow"]). Not applicable when using the language server's diagnostics.
 ### `go.vetOnSave`
 
-Vets code on file save using 'go tool vet'. Not applicable when using the language server's diagnostics. See 'go.languageServerExperimentalFeatures.diagnostics' setting.<br/>
-Allowed Options: `package`, `workspace`, `off`
+Vets code on file save using 'go tool vet'. Not applicable when using the language server's diagnostics.<br/>
+Allowed Options:
+
+* `package`: vet the current package on file saving
+* `workspace`: vet all the packages in the current workspace root folder on file saving
+* `off`: do not run vet automatically
+
 
 Default: `"package"`
 ### `gopls`
@@ -482,21 +581,6 @@ This section is directly read by `gopls`. See the [`gopls` section](#settings-fo
 
 Configure the default Go language server ('gopls'). In most cases, configuring this section is unnecessary. See [the documentation](https://github.com/golang/tools/blob/master/gopls/doc/settings.md) for all available settings.
 
-### `build.allowImplicitNetworkAccess`
-
-(Experimental) allowImplicitNetworkAccess disables GOPROXY=off, allowing implicit module
-downloads rather than requiring user action. This option will eventually
-be removed.
-
-
-Default: `false`
-### `build.allowModfileModifications`
-
-(Experimental) allowModfileModifications disables -mod=readonly, allowing imports from
-out-of-scope modules. This option will eventually be removed.
-
-
-Default: `false`
 ### `build.buildFlags`
 
 buildFlags is the set of flags passed on to the build system when invoked.
@@ -514,80 +598,96 @@ relative to the workspace folder. They are evaluated in order, and
 the last filter that applies to a path controls whether it is included.
 The path prefix can be empty, so an initial `-` excludes everything.
 
+DirectoryFilters also supports the `**` operator to match 0 or more directories.
+
 Examples:
 
-Exclude node_modules: `-node_modules`
+Exclude node_modules at current depth: `-node_modules`
+
+Exclude node_modules at any depth: `-**/node_modules`
 
 Include only project_a: `-` (exclude everything), `+project_a`
 
 Include only project_a, but not node_modules inside it: `-`, `+project_a`, `-project_a/node_modules`
 
+
+Default: `["-**/node_modules"]`
 ### `build.env`
 
 env adds environment variables to external commands run by `gopls`, most notably `go list`.
 
 ### `build.expandWorkspaceToModule`
 
-(Experimental) expandWorkspaceToModule instructs `gopls` to adjust the scope of the
-workspace to find the best available module root. `gopls` first looks for
-a go.mod file in any parent directory of the workspace folder, expanding
-the scope to that directory if it exists. If no viable parent directory is
-found, gopls will check if there is exactly one child directory containing
-a go.mod file, narrowing the scope to that directory if it exists.
+(Experimental) expandWorkspaceToModule determines which packages are considered
+"workspace packages" when the workspace is using modules.
+
+Workspace packages affect the scope of workspace-wide operations. Notably,
+gopls diagnoses all packages considered to be part of the workspace after
+every keystroke, so by setting "ExpandWorkspaceToModule" to false, and
+opening a nested workspace directory, you can reduce the amount of work
+gopls has to do to keep your workspace up to date.
 
 
 Default: `true`
-### `build.experimentalPackageCacheKey`
-
-(Experimental) experimentalPackageCacheKey controls whether to use a coarser cache key
-for package type information to increase cache hits. This setting removes
-the user's environment, build flags, and working directory from the cache
-key, which should be a safe change as all relevant inputs into the type
-checking pass are already hashed into the key. This is temporarily guarded
-by an experiment because caching behavior is subtle and difficult to
-comprehensively test.
-
-
-Default: `true`
-### `build.experimentalTemplateSupport`
-
-(Experimental) experimentalTemplateSupport opts into the experimental support
-for template files.
-
-
-Default: `false`
-### `build.experimentalUseInvalidMetadata`
-
-(Experimental) experimentalUseInvalidMetadata enables gopls to fall back on outdated
-package metadata to provide editor features if the go command fails to
-load packages for some reason (like an invalid go.mod file). This will
-eventually be the default behavior, and this setting will be removed.
-
-
-Default: `false`
-### `build.experimentalWorkspaceModule`
-
-(Experimental) experimentalWorkspaceModule opts a user into the experimental support
-for multi-module workspaces.
-
-
-Default: `false`
 ### `build.memoryMode`
 
-(Experimental) memoryMode controls the tradeoff `gopls` makes between memory usage and
-correctness.
+(Experimental) obsolete, no effect
 
-Values other than `Normal` are untested and may break in surprising ways.
+
+Default: `""`
+### `build.standaloneTags`
+
+standaloneTags specifies a set of build constraints that identify
+individual Go source files that make up the entire main package of an
+executable.
+
+A common example of standalone main files is the convention of using the
+directive `//go:build ignore` to denote files that are not intended to be
+included in any package, for example because they are invoked directly by
+the developer using `go run`.
+
+Gopls considers a file to be a standalone main file if and only if it has
+package name "main" and has a build directive of the exact form
+"//go:build tag" or "// +build tag", where tag is among the list of tags
+configured by this setting. Notably, if the build constraint is more
+complicated than a simple tag (such as the composite constraint
+`//go:build tag && go1.18`), the file is not considered to be a standalone
+main file.
+
+This setting is only supported when gopls is built with Go 1.16 or later.
+
+
+Default: `["ignore"]`
+### `build.templateExtensions`
+
+templateExtensions gives the extensions of file names that are treated
+as template files. (The extension
+is the part of the file name after the final dot.)
+
+### `build.workspaceFiles`
+
+workspaceFiles configures the set of globs that match files defining the
+logical build of the current workspace. Any on-disk changes to any files
+matching a glob specified here will trigger a reload of the workspace.
+
+This setting need only be customized in environments with a custom
+GOPACKAGESDRIVER.
+
+### `fileWatcher`
+
+(Experimental) fileWatcher specifies the server-side file watching strategy used by gopls.
+
+By default, this is set to "off", meaning gopls relies exclusively on the
+language client (e.g., the editor) to send file change notifications.
+
+Available options:
+  - "off"      : Client-driven watching (default)
+  - "fsnotify" : OS-level event notifications
+  - "poll"     : Periodic directory scanning
 <br/>
-Allowed Options:
+Allowed Options: `fsnotify`, `off`, `poll`
 
-* `DegradeClosed`: `"DegradeClosed"`: In DegradeClosed mode, `gopls` will collect less information about
-packages without open files. As a result, features like Find
-References and Rename will miss results in such packages.
-* `Normal`
-
-
-Default: `"Normal"`
+Default: `"off"`
 ### `formatting.gofumpt`
 
 gofumpt indicates if we should run gofumpt formatting.
@@ -601,23 +701,58 @@ imports beginning with this string after third-party packages. It should
 be the prefix of the import path whose imports should be grouped
 separately.
 
+It is used when tidying imports (during an LSP Organize
+Imports request) or when inserting new ones (for example,
+during completion); an LSP Formatting request merely sorts the
+existing imports.
+
 
 Default: `""`
+### `maxFileCacheBytes`
+
+(Experimental) maxFileCacheBytes sets a soft limit on the file cache size in bytes.
+If zero, the default budget is used.
+
+The cache may temporarily use more than this amount.
+Also, this parameter limits file contents; disk block usage
+as measured by du(1) may be significantly higher.
+
+
+Default: `0`
+### `memoryLimit`
+
+(Experimental) memoryLimit sets a soft memory limit (in bytes) for the gopls process, via
+runtime/debug.SetMemoryLimit. If non-positive (the default), no limit is set.
+
+On large workspaces, a single edit that invalidates many
+packages (for example a syntax error in a widely-imported
+package) can make the heap briefly grow well above the
+steady-state working set before the garbage collector
+catches up, spiking memory and, on memory-constrained
+machines, causing swapping. A soft limit makes the GC work
+harder to stay near the limit, trading some CPU for a lower
+memory peak.
+
+The limit is soft and may be exceeded. Set it comfortably above the
+steady-state working set, as too low a value causes excessive GC.
+
+Unlike the GOMEMLIMIT environment variable, this setting is
+strictly numeric; SI suffixes are not permitted.
+
+
+Default: `0`
 ### `ui.codelenses`
 
-codelenses overrides the enabled/disabled state of code lenses. See the
-"Code Lenses" section of the
-[Settings page](https://github.com/golang/tools/blob/master/gopls/doc/settings.md)
-for the list of supported lenses.
+codelenses overrides the enabled/disabled state of each of gopls'
+sources of [Code Lenses](codelenses.md).
 
 Example Usage:
 
 ```json5
 "gopls": {
 ...
-  "codelens": {
+  "codelenses": {
     "generate": false,  // Don't show the `go generate` lens.
-    "gc_details": true  // Show a code lens toggling the display of gc's choices.
   }
 ...
 }
@@ -625,13 +760,24 @@ Example Usage:
 
 | Properties | Description |
 | --- | --- |
-| `gc_details` | Toggle the calculation of gc annotations. <br/> Default: `false` |
-| `generate` | Runs `go generate` for a given directory. <br/> Default: `true` |
-| `regenerate_cgo` | Regenerates cgo definitions. <br/> Default: `true` |
-| `test` | Runs `go test` for a specific set of test or benchmark functions. <br/> Default: `false` |
-| `tidy` | Runs `go mod tidy` for a module. <br/> Default: `true` |
-| `upgrade_dependency` | Upgrades a dependency in the go.mod file for a module. <br/> Default: `true` |
-| `vendor` | Runs `go mod vendor` for a module. <br/> Default: `true` |
+| `generate` | `"generate"`: Run `go generate` <br/> This codelens source annotates any `//go:generate` comments with commands to run `go generate` in this directory, on all directories recursively beneath this one. <br/> See [Generating code](https://go.dev/blog/generate) for more details. <br/> <br/> Default: `true` |
+| `regenerate_cgo` | `"regenerate_cgo"`: Re-generate cgo declarations <br/> This codelens source annotates an `import "C"` declaration with a command to re-run the [cgo command](https://pkg.go.dev/cmd/cgo) to regenerate the corresponding Go declarations. <br/> Use this after editing the C code in comments attached to the import, or in C header files included by it. <br/> <br/> Default: `true` |
+| `run_govulncheck` | `"run_govulncheck"`: Run govulncheck (legacy) <br/> This codelens source annotates the `module` directive in a go.mod file with a command to run Govulncheck asynchronously. <br/> [Govulncheck](https://go.dev/blog/vuln) is a static analysis tool that computes the set of functions reachable within your application, including dependencies; queries a database of known security vulnerabilities; and reports any potential problems it finds. <br/> <br/> Default: `true` |
+| `test` | `"test"`: Run tests and benchmarks <br/> This codelens source annotates each `Test` and `Benchmark` function in a `*_test.go` file with a command to run it. <br/> This source is off by default because VS Code has a client-side custom UI for testing, and because progress notifications are not a great UX for streamed test output. See: - golang/go#67400 for a discussion of this feature. - https://github.com/joaotavora/eglot/discussions/1402   for an alternative approach. <br/> <br/> Default: `false` |
+| `tidy` | `"tidy"`: Tidy go.mod file <br/> This codelens source annotates the `module` directive in a go.mod file with a command to run [`go mod tidy`](https://go.dev/ref/mod#go-mod-tidy), which ensures that the go.mod file matches the source code in the module. <br/> <br/> Default: `true` |
+| `upgrade_dependency` | `"upgrade_dependency"`: Update dependencies <br/> This codelens source annotates the `module` directive in a go.mod file with commands to: <br/> - check for available upgrades, - upgrade direct dependencies, and - upgrade all dependencies transitively. <br/> <br/> Default: `true` |
+| `vendor` | `"vendor"`: Update vendor directory <br/> This codelens source annotates the `module` directive in a go.mod file with a command to run [`go mod vendor`](https://go.dev/ref/mod#go-mod-vendor), which creates or updates the directory named `vendor` in the module root so that it contains an up-to-date copy of all necessary package dependencies. <br/> <br/> Default: `true` |
+| `vulncheck` | (Experimental) `"vulncheck"`: Run govulncheck <br/> This codelens source annotates the `module` directive in a go.mod file with a command to run govulncheck synchronously. <br/> [Govulncheck](https://go.dev/blog/vuln) is a static analysis tool that computes the set of functions reachable within your application, including dependencies; queries a database of known security vulnerabilities; and reports any potential problems it finds. <br/> <br/> Default: `false` |
+### `ui.completion.completeFunctionCalls`
+
+completeFunctionCalls enables function call completion.
+
+When completing a statement, or when a function return type matches the
+expected of the expression being completed, completion may suggest call
+expressions (i.e. may include parentheses).
+
+
+Default: `true`
 ### `ui.completion.completionBudget`
 
 (For Debugging) completionBudget is the soft latency goal for completion requests. Most
@@ -644,7 +790,7 @@ results. Zero means unlimited.
 Default: `"100ms"`
 ### `ui.completion.experimentalPostfixCompletions`
 
-(Experimental) experimentalPostfixCompletions enables artifical method snippets
+(Experimental) experimentalPostfixCompletions enables artificial method snippets
 such as "someSlice.sort!".
 
 
@@ -668,8 +814,8 @@ Default: `false`
 
 analyses specify analyses that the user would like to enable or disable.
 A map of the names of analysis passes that should be enabled/disabled.
-A full list of analyzers that gopls uses can be found
-[here](https://github.com/golang/tools/blob/master/gopls/doc/analyzers.md).
+A full list of analyzers that gopls uses can be found in
+[analyzers](https://go.dev/gopls/analyzers).
 
 Example Usage:
 
@@ -677,58 +823,288 @@ Example Usage:
 ...
 "analyses": {
   "unreachable": false, // Disable the unreachable analyzer.
-  "unusedparams": true  // Enable the unusedparams analyzer.
+  "unusedvariable": true  // Enable the unusedvariable analyzer.
 }
 ...
 ```
 
 | Properties | Description |
 | --- | --- |
-| `asmdecl` | report mismatches between assembly files and Go declarations <br/> Default: `true` |
-| `assign` | check for useless assignments <br/> This checker reports assignments of the form x = x or a[i] = a[i]. These are almost always useless, and even when they aren't they are usually a mistake. <br/> Default: `true` |
-| `atomic` | check for common mistakes using the sync/atomic package <br/> The atomic checker looks for assignment statements of the form: <br/> <pre>x = atomic.AddUint64(&x, 1)</pre><br/> which are not atomic. <br/> Default: `true` |
-| `atomicalign` | check for non-64-bits-aligned arguments to sync/atomic functions <br/> Default: `true` |
-| `bools` | check for common mistakes involving boolean operators <br/> Default: `true` |
-| `buildtag` | check that +build tags are well-formed and correctly located <br/> Default: `true` |
-| `cgocall` | detect some violations of the cgo pointer passing rules <br/> Check for invalid cgo pointer passing. This looks for code that uses cgo to call C code passing values whose types are almost always invalid according to the cgo pointer sharing rules. Specifically, it warns about attempts to pass a Go chan, map, func, or slice to C, either directly, or via a pointer, array, or struct. <br/> Default: `true` |
+| `QF1001` | Apply De Morgan's law <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `false` |
+| `QF1002` | Convert untagged switch to tagged switch <br/> An untagged switch that compares a single variable against a series of values can be replaced with a tagged switch. <br/> Before: <br/> <pre>switch {<br/>case x == 1 || x == 2, x == 3:<br/>    ...<br/>case x == 4:<br/>    ...<br/>default:<br/>    ...<br/>}</pre><br/> After: <br/> <pre>switch x {<br/>case 1, 2, 3:<br/>    ...<br/>case 4:<br/>    ...<br/>default:<br/>    ...<br/>}</pre><br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `QF1003` | Convert if/else-if chain to tagged switch <br/> A series of if/else-if checks comparing the same variable against values can be replaced with a tagged switch. <br/> Before: <br/> <pre>if x == 1 || x == 2 {<br/>    ...<br/>} else if x == 3 {<br/>    ...<br/>} else {<br/>    ...<br/>}</pre><br/> After: <br/> <pre>switch x {<br/>case 1, 2:<br/>    ...<br/>case 3:<br/>    ...<br/>default:<br/>    ...<br/>}</pre><br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `QF1004` | Use strings.ReplaceAll instead of strings.Replace with n == -1 <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `QF1005` | Expand call to math.Pow <br/> Some uses of math.Pow can be simplified to basic multiplication. <br/> Before: <br/> <pre>math.Pow(x, 2)</pre><br/> After: <br/> <pre>x * x</pre><br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `false` |
+| `QF1006` | Lift if+break into loop condition <br/> Before: <br/> <pre>for {<br/>    if done {<br/>        break<br/>    }<br/>    ...<br/>}</pre><br/> After: <br/> <pre>for !done {<br/>    ...<br/>}</pre><br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `false` |
+| `QF1007` | Merge conditional assignment into variable declaration <br/> Before: <br/> <pre>x := false<br/>if someCondition {<br/>    x = true<br/>}</pre><br/> After: <br/> <pre>x := someCondition</pre><br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `false` |
+| `QF1008` | Omit embedded fields from selector expression <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `false` |
+| `QF1009` | Use time.Time.Equal instead of == operator <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `QF1010` | Convert slice of bytes to string when printing it <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `QF1011` | Omit redundant type from variable declaration <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `false` |
+| `QF1012` | Use fmt.Fprintf(x, ...) instead of x.Write(fmt.Sprintf(...)) <br/> Available since <br/> <pre>2022.1</pre><br/> <br/> Default: `true` |
+| `S1000` | Use plain channel send or receive instead of single-case select <br/> Select statements with a single case can be replaced with a simple send or receive. <br/> Before: <br/> <pre>select {<br/>case x := <-ch:<br/>    fmt.Println(x)<br/>}</pre><br/> After: <br/> <pre>x := <-ch<br/>fmt.Println(x)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1001` | Replace for loop with call to copy <br/> Use copy() for copying elements from one slice to another. For arrays of identical size, you can use simple assignment. <br/> Before: <br/> <pre>for i, x := range src {<br/>    dst[i] = x<br/>}</pre><br/> After: <br/> <pre>copy(dst, src)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1002` | Omit comparison with boolean constant <br/> Before: <br/> <pre>if x == true {}</pre><br/> After: <br/> <pre>if x {}</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1003` | Replace call to strings.Index with strings.Contains <br/> Before: <br/> <pre>if strings.Index(x, y) != -1 {}</pre><br/> After: <br/> <pre>if strings.Contains(x, y) {}</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1004` | Replace call to bytes.Compare with bytes.Equal <br/> Before: <br/> <pre>if bytes.Compare(x, y) == 0 {}</pre><br/> After: <br/> <pre>if bytes.Equal(x, y) {}</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1005` | Drop unnecessary use of the blank identifier <br/> In many cases, assigning to the blank identifier is unnecessary. <br/> Before: <br/> <pre>for _ = range s {}<br/>_ = <-ch</pre><br/> After: <br/> <pre>for range s{}<br/><-ch</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1006` | Use 'for { ... }' for infinite loops <br/> For infinite loops, using for { ... } is the most idiomatic choice. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1007` | Simplify regular expression by using raw string literal <br/> Raw string literals use backticks instead of quotation marks and do not support any escape sequences. This means that the backslash can be used freely, without the need of escaping. <br/> Since regular expressions have their own escape sequences, raw strings can improve their readability. <br/> Before: <br/> <pre>regexp.Compile("\\A(\\w+) profile: total \\d+\\n\\z")</pre><br/> After: <br/> <pre>regexp.Compile(`\A(\w+) profile: total \d+\n\z`)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1008` | Simplify returning boolean expression <br/> Before: <br/> <pre>if <expr> {<br/>    return true<br/>}<br/>return false</pre><br/> After: <br/> <pre>return <expr></pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1009` | Omit redundant nil check on slices, maps, and channels <br/> The len function is defined for all slices, maps, and channels, even nil ones, which have a length of zero. It is not necessary to check for nil before checking that their length is not zero. <br/> Before: <br/> <pre>if x != nil && len(x) != 0 {}</pre><br/> After: <br/> <pre>if len(x) != 0 {}</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1010` | Omit default slice index <br/> When slicing, the second index defaults to the length of the value, making s\[n:len(s)] and s\[n:] equivalent. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1011` | Use a single append to concatenate two slices <br/> Before: <br/> <pre>for _, e := range y {<br/>    x = append(x, e)<br/>}</pre><br/> <pre>for i := range y {<br/>    x = append(x, y[i])<br/>}</pre><br/> <pre>for i := range y {<br/>    v := y[i]<br/>    x = append(x, v)<br/>}</pre><br/> After: <br/> <pre>x = append(x, y...)<br/>x = append(x, y...)<br/>x = append(x, y...)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1012` | Replace time.Now().Sub(x) with time.Since(x) <br/> The time.Since helper has the same effect as using time.Now().Sub(x) but is easier to read. <br/> Before: <br/> <pre>time.Now().Sub(x)</pre><br/> After: <br/> <pre>time.Since(x)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1016` | Use a type conversion instead of manually copying struct fields <br/> Two struct types with identical fields can be converted between each other. In older versions of Go, the fields had to have identical struct tags. Since Go 1.8, however, struct tags are ignored during conversions. It is thus not necessary to manually copy every field individually. <br/> Before: <br/> <pre>var x T1<br/>y := T2{<br/>    Field1: x.Field1,<br/>    Field2: x.Field2,<br/>}</pre><br/> After: <br/> <pre>var x T1<br/>y := T2(x)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1017` | Replace manual trimming with strings.TrimPrefix <br/> Instead of using strings.HasPrefix and manual slicing, use the strings.TrimPrefix function. If the string doesn't start with the prefix, the original string will be returned. Using strings.TrimPrefix reduces complexity, and avoids common bugs, such as off-by-one mistakes. <br/> Before: <br/> <pre>if strings.HasPrefix(str, prefix) {<br/>    str = str[len(prefix):]<br/>}</pre><br/> After: <br/> <pre>str = strings.TrimPrefix(str, prefix)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1018` | Use 'copy' for sliding elements <br/> copy() permits using the same source and destination slice, even with overlapping ranges. This makes it ideal for sliding elements in a slice. <br/> Before: <br/> <pre>for i := 0; i < n; i++ {<br/>    bs[i] = bs[offset+i]<br/>}</pre><br/> After: <br/> <pre>copy(bs[:n], bs[offset:])</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1019` | Simplify 'make' call by omitting redundant arguments <br/> The 'make' function has default values for the length and capacity arguments. For channels, the length defaults to zero, and for slices, the capacity defaults to the length. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1020` | Omit redundant nil check in type assertion <br/> Before: <br/> <pre>if _, ok := i.(T); ok && i != nil {}</pre><br/> After: <br/> <pre>if _, ok := i.(T); ok {}</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1021` | Merge variable declaration and assignment <br/> Before: <br/> <pre>var x uint<br/>x = 1</pre><br/> After: <br/> <pre>var x uint = 1</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1023` | Omit redundant control flow <br/> Functions that have no return value do not need a return statement as the final statement of the function. <br/> Switches in Go do not have automatic fallthrough, unlike languages like C. It is not necessary to have a break statement as the final statement in a case block. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1024` | Replace x.Sub(time.Now()) with time.Until(x) <br/> The time.Until helper has the same effect as using x.Sub(time.Now()) but is easier to read. <br/> Before: <br/> <pre>x.Sub(time.Now())</pre><br/> After: <br/> <pre>time.Until(x)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1025` | Don't use fmt.Sprintf("%s", x) unnecessarily <br/> In many instances, there are easier and more efficient ways of getting a value's string representation. Whenever a value's underlying type is a string already, or the type has a String method, they should be used directly. <br/> Given the following shared definitions <br/> <pre>type T1 string<br/>type T2 int</pre><br/> <pre>func (T2) String() string { return "Hello, world" }</pre><br/> <pre>var x string<br/>var y T1<br/>var z T2</pre><br/> we can simplify <br/> <pre>fmt.Sprintf("%s", x)<br/>fmt.Sprintf("%s", y)<br/>fmt.Sprintf("%s", z)</pre><br/> to <br/> <pre>x<br/>string(y)<br/>z.String()</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1028` | Simplify error construction with fmt.Errorf <br/> Before: <br/> <pre>errors.New(fmt.Sprintf(...))</pre><br/> After: <br/> <pre>fmt.Errorf(...)</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1029` | Range over the string directly <br/> Ranging over a string will yield byte offsets and runes. If the offset isn't used, this is functionally equivalent to converting the string to a slice of runes and ranging over that. Ranging directly over the string will be more performant, however, as it avoids allocating a new slice, the size of which depends on the length of the string. <br/> Before: <br/> <pre>for _, r := range []rune(s) {}</pre><br/> After: <br/> <pre>for _, r := range s {}</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `S1030` | Use bytes.Buffer.String or bytes.Buffer.Bytes <br/> bytes.Buffer has both a String and a Bytes method. It is almost never necessary to use string(buf.Bytes()) or \[]byte(buf.String()) – simply use the other method. <br/> The only exception to this are map lookups. Due to a compiler optimization, m\[string(buf.Bytes())] is more efficient than m\[buf.String()]. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1031` | Omit redundant nil check around loop <br/> You can use range on nil slices and maps, the loop will simply never execute. This makes an additional nil check around the loop unnecessary. <br/> Before: <br/> <pre>if s != nil {<br/>    for _, x := range s {<br/>        ...<br/>    }<br/>}</pre><br/> After: <br/> <pre>for _, x := range s {<br/>    ...<br/>}</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `S1032` | Use sort.Ints(x), sort.Float64s(x), and sort.Strings(x) <br/> The sort.Ints, sort.Float64s and sort.Strings functions are easier to read than sort.Sort(sort.IntSlice(x)), sort.Sort(sort.Float64Slice(x)) and sort.Sort(sort.StringSlice(x)). <br/> Before: <br/> <pre>sort.Sort(sort.StringSlice(x))</pre><br/> After: <br/> <pre>sort.Strings(x)</pre><br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `true` |
+| `S1033` | Unnecessary guard around call to 'delete' <br/> Calling delete on a nil map is a no-op. <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `true` |
+| `S1034` | Use result of type assertion to simplify cases <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `true` |
+| `S1035` | Redundant call to net/http.CanonicalHeaderKey in method call on net/http.Header <br/> The methods on net/http.Header, namely Add, Del, Get and Set, already canonicalize the given header name. <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `true` |
+| `S1036` | Unnecessary guard around map access <br/> When accessing a map key that doesn't exist yet, one receives a zero value. Often, the zero value is a suitable value, for example when using append or doing integer math. <br/> The following <br/> <pre>if _, ok := m["foo"]; ok {<br/>    m["foo"] = append(m["foo"], "bar")<br/>} else {<br/>    m["foo"] = []string{"bar"}<br/>}</pre><br/> can be simplified to <br/> <pre>m["foo"] = append(m["foo"], "bar")</pre><br/> and <br/> <pre>if _, ok := m2["k"]; ok {<br/>    m2["k"] += 4<br/>} else {<br/>    m2["k"] = 4<br/>}</pre><br/> can be simplified to <br/> <pre>m["k"] += 4</pre><br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `true` |
+| `S1037` | Elaborate way of sleeping <br/> Using a select statement with a single case receiving from the result of time.After is a very elaborate way of sleeping that can much simpler be expressed with a simple call to time.Sleep. <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `true` |
+| `S1038` | Unnecessarily complex way of printing formatted string <br/> Instead of using fmt.Print(fmt.Sprintf(...)), one can use fmt.Printf(...). <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `true` |
+| `S1039` | Unnecessary use of fmt.Sprint <br/> Calling fmt.Sprint with a single string argument is unnecessary and identical to using the string directly. <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `true` |
+| `S1040` | Type assertion to current type <br/> The type assertion x.(SomeInterface), when x already has type SomeInterface, can only fail if x is nil. Usually, this is left-over code from when x had a different type and you can safely delete the type assertion. If you want to check that x is not nil, consider being explicit and using an actual if x == nil comparison instead of relying on the type assertion panicking. <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `SA1000` | Invalid regular expression <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1001` | Invalid template <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA1002` | Invalid format in time.Parse <br/> time.Parse requires a layout string that uses Go's reference time: 'Mon Jan 2 15:04:05 MST 2006'. The layout must represent this date and time exactly. See [https://pkg.go.dev/time#pkg-constants](https://pkg.go.dev/time#pkg-constants) for layout examples. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1003` | Unsupported argument to functions in encoding/binary <br/> The encoding/binary package can only serialize types with known sizes. This precludes the use of the int and uint types, as their sizes differ on different architectures. Furthermore, it doesn't support serializing maps, channels, strings, or functions. <br/> Before Go 1.8, bool wasn't supported, either. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1004` | Suspiciously small untyped constant in time.Sleep <br/> The time.Sleep function takes a time.Duration as its only argument. Durations are expressed in nanoseconds. Thus, calling time.Sleep(1) will sleep for 1 nanosecond. This is a common source of bugs, as sleep functions in other languages often accept seconds or milliseconds. <br/> The time package provides constants such as time.Second to express large durations. These can be combined with arithmetic to express arbitrary durations, for example 5 \* time.Second for 5 seconds. <br/> If you truly meant to sleep for a tiny amount of time, use n \* time.Nanosecond to signal to Staticcheck that you did mean to sleep for some amount of nanoseconds. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA1005` | Invalid first argument to exec.Command <br/> os/exec runs programs directly (using variants of the fork and exec system calls on Unix systems). This shouldn't be confused with running a command in a shell. The shell will allow for features such as input redirection, pipes, and general scripting. The shell is also responsible for splitting the user's input into a program name and its arguments. For example, the equivalent to <br/> <pre>ls / /tmp</pre><br/> would be <br/> <pre>exec.Command("ls", "/", "/tmp")</pre><br/> If you want to run a command in a shell, consider using something like the following – but be aware that not all systems, particularly Windows, will have a /bin/sh program: <br/> <pre>exec.Command("/bin/sh", "-c", "ls | grep Awesome")</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA1007` | Invalid URL in net/url.Parse <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1008` | Non-canonical key in http.Header map <br/> Keys in http.Header maps are canonical, meaning they follow a specific combination of uppercase and lowercase letters. Methods such as http.Header.Add and http.Header.Del convert inputs into this canonical form before manipulating the map. <br/> When manipulating http.Header maps directly, as opposed to using the provided methods, care should be taken to stick to canonical form in order to avoid inconsistencies. The following piece of code demonstrates one such inconsistency: <br/> <pre>h := http.Header{}<br/>h["etag"] = []string{"1234"}<br/>h.Add("etag", "5678")<br/>fmt.Println(h)</pre><br/> <pre>// Output:<br/>// map[Etag:[5678] etag:[1234]]</pre><br/> The easiest way of obtaining the canonical form of a key is to use http.CanonicalHeaderKey. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA1010` | (\*regexp.Regexp).FindAll called with n == 0, which will always return zero results <br/> If n >= 0, the function returns at most n matches/submatches. To return all results, specify a negative number. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1011` | Various methods in the 'strings' package expect valid UTF-8, but invalid input is provided <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1012` | A nil context.Context is being passed to a function, consider using context.TODO instead <br/> The context package prohibits the use of a nil context. If no parent context is available, a new context should be used, e.g. context.TODO or context.Background. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA1013` | io.Seeker.Seek is being called with the whence constant as the first argument, but it should be the second <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA1014` | Non-pointer value passed to Unmarshal or Decode <br/> Functions such as encoding/json.Unmarshal and (\*encoding/json.Decoder).Decode require a pointer to the value that should be populated. Passing a non-pointer value results in the function returning an error at runtime, as it cannot modify the target value. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1015` | Using time.Tick in a way that will leak. Consider using time.NewTicker, and only use time.Tick in tests, commands and endless functions <br/> Before Go 1.23, time.Tickers had to be closed to be able to be garbage collected. Since time.Tick doesn't make it possible to close the underlying ticker, using it repeatedly would leak memory. <br/> Go 1.23 fixes this by allowing tickers to be collected even if they weren't closed. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1016` | Trapping a signal that cannot be trapped <br/> Not all signals can be intercepted by a process. Specifically, on UNIX-like systems, the syscall.SIGKILL and syscall.SIGSTOP signals are never passed to the process, but instead handled directly by the kernel. It is therefore pointless to try and handle these signals. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA1017` | Channels used with os/signal.Notify should be buffered <br/> The os/signal package uses non-blocking channel sends when delivering signals. If the receiving end of the channel isn't ready and the channel is either unbuffered or full, the signal will be dropped. To avoid missing signals, the channel should be buffered and of the appropriate size. For a channel used for notification of just one signal value, a buffer of size 1 is sufficient. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1018` | strings.Replace called with n == 0, which does nothing <br/> With n == 0, zero instances will be replaced. To replace all instances, use a negative number, or use strings.ReplaceAll. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1020` | Using an invalid host:port pair with a net.Listen-related function <br/> Functions such as net.Listen, net.ListenTCP, and similar, expect a valid network address in the form of host:port. The host, the port, or both, can be omitted, e.g. localhost:8080, :8080 or : are valid host:port pairs. See [https://pkg.go.dev/net#Listen](https://pkg.go.dev/net#Listen) for the full documentation. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1021` | Using bytes.Equal to compare two net.IP <br/> A net.IP stores an IPv4 or IPv6 address as a slice of bytes. The length of the slice for an IPv4 address, however, can be either 4 or 16 bytes long, using different ways of representing IPv4 addresses. In order to correctly compare two net.IPs, the net.IP.Equal method should be used, as it takes both representations into account. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1023` | Modifying the buffer in an io.Writer implementation <br/> Write must not modify the slice data, even temporarily. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1024` | A string cutset contains duplicate characters <br/> The strings.TrimLeft and strings.TrimRight functions take cutsets, not prefixes. A cutset is treated as a set of characters to remove from a string. For example, <br/> <pre>strings.TrimLeft("42133word", "1234")</pre><br/> will result in the string "word" – any characters that are 1, 2, 3 or 4 are cut from the left of the string. <br/> In order to remove one string from another, use strings.TrimPrefix instead. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA1025` | It is not possible to use (\*time.Timer).Reset's return value correctly <br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `false` |
+| `SA1026` | Cannot marshal channels or functions <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `false` |
+| `SA1027` | Atomic access to 64-bit variable must be 64-bit aligned <br/> On ARM, x86-32, and 32-bit MIPS, it is the caller's responsibility to arrange for 64-bit alignment of 64-bit words accessed atomically. The first word in a variable or in an allocated struct, array, or slice can be relied upon to be 64-bit aligned. <br/> You can use the structlayout tool to inspect the alignment of fields in a struct. <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `false` |
+| `SA1028` | sort.Slice can only be used on slices <br/> The first argument of sort.Slice must be a slice. <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `false` |
+| `SA1029` | Inappropriate key in call to context.WithValue <br/> The provided key must be comparable and should not be of type string or any other built-in type to avoid collisions between packages using context. Users of WithValue should define their own types for keys. <br/> To avoid allocating when assigning to an interface{}, context keys often have concrete type struct{}. Alternatively, exported context key variables' static type should be a pointer or interface. <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `false` |
+| `SA1030` | Invalid argument in call to a strconv function <br/> This check validates the format, number base and bit size arguments of the various parsing and formatting functions in strconv. <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `false` |
+| `SA1031` | Overlapping byte slices passed to an encoder <br/> In an encoding function of the form Encode(dst, src), dst and src were found to reference the same memory. This can result in src bytes being overwritten before they are read, when the encoder writes more than one byte per src byte. <br/> Available since <br/> <pre>2024.1</pre><br/> <br/> Default: `false` |
+| `SA1032` | Wrong order of arguments to errors.Is <br/> The first argument of the function errors.Is is the error that we have and the second argument is the error we're trying to match against. For example: <br/> <pre>if errors.Is(err, io.EOF) { ... }</pre><br/> This check detects some cases where the two arguments have been swapped. It flags any calls where the first argument is referring to a package-level error variable, such as <br/> <pre>if errors.Is(io.EOF, err) { /* this is wrong */ }</pre><br/> Available since <br/> <pre>2024.1</pre><br/> <br/> Default: `false` |
+| `SA2001` | Empty critical section, did you mean to defer the unlock? <br/> Empty critical sections of the kind <br/> <pre>mu.Lock()<br/>mu.Unlock()</pre><br/> are very often a typo, and the following was intended instead: <br/> <pre>mu.Lock()<br/>defer mu.Unlock()</pre><br/> Do note that sometimes empty critical sections can be useful, as a form of signaling to wait on another goroutine. Many times, there are simpler ways of achieving the same effect. When that isn't the case, the code should be amply commented to avoid confusion. Combining such comments with a //lint:ignore directive can be used to suppress this rare false positive. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA2002` | Called testing.T.FailNow or SkipNow in a goroutine, which isn't allowed <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA2003` | Deferred Lock right after locking, likely meant to defer Unlock instead <br/> Deferring a call to Lock immediately after locking is almost always a typo. For example: <br/> <pre>mu.Lock()<br/>defer mu.Lock()</pre><br/> While this does not strictly guarantee a deadlock depending on how the surrounding code is structured, it is highly likely to be a mistake. The intended code was likely this: <br/> <pre>mu.Lock()<br/>defer mu.Unlock()</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA3000` | TestMain doesn't call os.Exit, hiding test failures <br/> Test executables (and in turn 'go test') exit with a non-zero status code if any tests failed. When specifying your own TestMain function, it is your responsibility to arrange for this, by calling os.Exit with the correct code. The correct code is returned by (\*testing.M).Run, so the usual way of implementing TestMain is to end it with os.Exit(m.Run()). <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA3001` | Assigning to b.N in benchmarks distorts the results <br/> The testing package dynamically sets b.N to improve the reliability of benchmarks and uses it in computations to determine the duration of a single operation. Benchmark code must not alter b.N as this would falsify results. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4000` | Binary operator has identical expressions on both sides <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4001` | &\*x gets simplified to x, it does not copy x <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4003` | Comparing unsigned values against negative values is pointless <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4004` | The loop exits unconditionally after one iteration <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4005` | Field assignment that will never be observed. Did you mean to use a pointer receiver? <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `false` |
+| `SA4006` | A value assigned to a variable is never read before being overwritten. Forgotten error check or dead code? <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA4008` | The variable in the loop condition never changes, are you incrementing the wrong variable? <br/> For example: <br/> <pre>for i := 0; i < 10; j++ { ... }</pre><br/> This may also occur when a loop can only execute once because of unconditional control flow that terminates the loop. For example, when a loop body contains an unconditional break, return, or panic: <br/> <pre>func f() {<br/>	panic("oops")<br/>}<br/>func g() {<br/>	for i := 0; i < 10; i++ {<br/>		// f unconditionally calls panic, which means "i" is<br/>		// never incremented.<br/>		f()<br/>	}<br/>}</pre><br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA4009` | A function argument is overwritten before its first use <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA4010` | The result of append will never be observed anywhere <br/> Calls to append produce a new slice value. When the result of append is assigned to a variable that is never subsequently read, the append operation may have an unintended effect. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA4011` | Break statement with no effect. Did you mean to break out of an outer loop? <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4012` | Comparing a value against NaN even though no value is equal to NaN <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA4013` | Negating a boolean twice (!!b) is the same as writing b. This is either redundant, or a typo. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4014` | An if/else if chain has repeated conditions and no side-effects; if the condition didn't match the first time, it won't match the second time, either <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4015` | Calling functions like math.Ceil on floats converted from integers doesn't do anything useful <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA4016` | Certain bitwise operations, such as x ^ 0, do not do anything useful <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4017` | Discarding the return values of a function without side effects, making the call pointless <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA4018` | Self-assignment of variables <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA4019` | Multiple, identical build constraints in the same file <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA4020` | Unreachable case clause in a type switch <br/> In a type switch like the following <br/> <pre>type T struct{}<br/>func (T) Read(b []byte) (int, error) { return 0, nil }</pre><br/> <pre>var v any = T{}</pre><br/> <pre>switch v.(type) {<br/>case io.Reader:<br/>    // ...<br/>case T:<br/>    // unreachable<br/>}</pre><br/> the second case clause can never be reached because T implements io.Reader and case clauses are evaluated in source order. <br/> Another example: <br/> <pre>type T struct{}<br/>func (T) Read(b []byte) (int, error) { return 0, nil }<br/>func (T) Close() error { return nil }</pre><br/> <pre>var v any = T{}</pre><br/> <pre>switch v.(type) {<br/>case io.Reader:<br/>    // ...<br/>case io.ReadCloser:<br/>    // unreachable<br/>}</pre><br/> Even though T has a Close method and thus implements io.ReadCloser, io.Reader will always match first. The method set of io.Reader is a subset of io.ReadCloser. Thus it is impossible to match the second case without matching the first case. <br/> ### Structurally equivalent interfaces <br/> A special case of the previous example are structurally identical interfaces. Given these declarations <br/> <pre>type T error<br/>type V error</pre><br/> <pre>func doSomething() error {<br/>    err, ok := doAnotherThing()<br/>    if ok {<br/>        return T(err)<br/>    }</pre><br/> <pre>    return U(err)<br/>}</pre><br/> the following type switch will have an unreachable case clause: <br/> <pre>switch doSomething().(type) {<br/>case T:<br/>    // ...<br/>case V:<br/>    // unreachable<br/>}</pre><br/> T will always match before V because they are structurally equivalent and therefore doSomething()'s return value implements both. <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `true` |
+| `SA4022` | Comparing the address of a variable against nil <br/> Code such as 'if &x == nil' is meaningless, because taking the address of a variable always yields a non-nil pointer. <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `true` |
+| `SA4023` | Impossible comparison of interface value with untyped nil <br/> Under the covers, interfaces are implemented as two elements, a type T and a value V. V is a concrete value such as an int, struct or pointer, never an interface itself, and has type T. For instance, if we store the int value 3 in an interface, the resulting interface value has, schematically, (T=int, V=3). The value V is also known as the interface's dynamic value, since a given interface variable might hold different values V (and corresponding types T) during the execution of the program. <br/> An interface value is nil only if the V and T are both unset, (T=nil, V is not set), In particular, a nil interface will always hold a nil type. If we store a nil pointer of type \*int inside an interface value, the inner type will be \*int regardless of the value of the pointer: (T=\*int, V=nil). Such an interface value will therefore be non-nil even when the pointer value V inside is nil. <br/> This situation can be confusing, and arises when a nil value is stored inside an interface value such as an error return: <br/> <pre>func returnsError() error {<br/>    var p *MyError = nil<br/>    if bad() {<br/>        p = ErrBad<br/>    }<br/>    return p // Will always return a non-nil error.<br/>}</pre><br/> If all goes well, the function returns a nil p, so the return value is an error interface value holding (T=\*MyError, V=nil). This means that if the caller compares the returned error to nil, it will always look as if there was an error even if nothing bad happened. To return a proper nil error to the caller, the function must return an explicit nil: <br/> <pre>func returnsError() error {<br/>    if bad() {<br/>        return ErrBad<br/>    }<br/>    return nil<br/>}</pre><br/> It's a good idea for functions that return errors always to use the error type in their signature (as we did above) rather than a concrete type such as \*MyError, to help guarantee the error is created correctly. As an example, os.Open returns an error even though, if not nil, it's always of concrete type \*os.PathError. <br/> Similar situations to those described here can arise whenever interfaces are used. Just keep in mind that if any concrete value has been stored in the interface, the interface will not be nil. For more information, see The Laws of Reflection at [https://golang.org/doc/articles/laws\_of\_reflection.html](https://golang.org/doc/articles/laws_of_reflection.html). <br/> This text has been copied from [https://golang.org/doc/faq#nil\_error](https://golang.org/doc/faq#nil_error), licensed under the Creative Commons Attribution 3.0 License. <br/> Available since <br/> <pre>2020.2</pre><br/> <br/> Default: `false` |
+| `SA4024` | Checking for impossible return value from a builtin function <br/> Return values of the len and cap builtins cannot be negative. <br/> See [https://golang.org/pkg/builtin/#len](https://golang.org/pkg/builtin/#len) and [https://golang.org/pkg/builtin/#cap](https://golang.org/pkg/builtin/#cap). <br/> Example: <br/> <pre>if len(slice) < 0 {<br/>    fmt.Println("unreachable code")<br/>}</pre><br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `SA4025` | Integer division of literals that results in zero <br/> When dividing two integer constants, the result will also be an integer. Thus, a division such as 2 / 3 results in 0. This is true for all of the following examples: <br/> <pre>_ = 2 / 3<br/>const _ = 2 / 3<br/>const _ float64 = 2 / 3<br/>_ = float64(2 / 3)</pre><br/> Staticcheck will flag such divisions if both sides of the division are integer literals, as it is highly unlikely that the division was intended to truncate to zero. Staticcheck will not flag integer division involving named constants, to avoid noisy positives. <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `SA4026` | Go constants cannot express negative zero <br/> In IEEE 754 floating point math, zero has a sign and can be positive or negative. This can be useful in certain numerical code. <br/> Go constants, however, cannot express negative zero. This means that the literals -0.0 and 0.0 have the same ideal value (zero) and will both represent positive zero at runtime. <br/> To explicitly and reliably create a negative zero, you can use the math.Copysign function: math.Copysign(0, -1). <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `SA4027` | (\*net/url.URL).Query returns a copy, modifying it doesn't change the URL <br/> (\*net/url.URL).Query parses the current value of net/url.URL.RawQuery and returns it as a map of type net/url.Values. Subsequent changes to this map will not affect the URL unless the map gets encoded and assigned to the URL's RawQuery. <br/> As a consequence, the following code pattern is an expensive no-op: u.Query().Add(key, value). <br/> Available since <br/> <pre>2021.1</pre><br/> <br/> Default: `true` |
+| `SA4028` | x % 1 is always zero <br/> Available since <br/> <pre>2022.1</pre><br/> <br/> Default: `true` |
+| `SA4029` | Ineffective attempt at sorting slice <br/> sort.Float64Slice, sort.IntSlice, and sort.StringSlice are types, not functions. Doing x = sort.StringSlice(x) does nothing, especially not sort any values. The correct usage is sort.Sort(sort.StringSlice(x)) or sort.StringSlice(x).Sort(), but there are more convenient helpers, namely sort.Float64s, sort.Ints, and sort.Strings. <br/> Available since <br/> <pre>2022.1</pre><br/> <br/> Default: `true` |
+| `SA4030` | Ineffective attempt at generating random number <br/> Functions in the math/rand package that accept upper limits, such as Intn, generate random numbers in the half-open interval \[0,n). In other words, the generated numbers will be >= 0 and \< n – they don't include n. rand.Intn(1) therefore doesn't generate 0 or 1, it always generates 0. <br/> Available since <br/> <pre>2022.1</pre><br/> <br/> Default: `true` |
+| `SA4031` | Checking never-nil value against nil <br/> Available since <br/> <pre>2022.1</pre><br/> <br/> Default: `false` |
+| `SA4032` | Comparing runtime.GOOS or runtime.GOARCH against impossible value <br/> Available since <br/> <pre>2024.1</pre><br/> <br/> Default: `true` |
+| `SA5000` | Assignment to nil map <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA5001` | Deferring Close before checking for a possible error <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA5002` | The empty for loop ('for {}') spins and can block the scheduler <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA5003` | Defers in infinite loops will never execute <br/> Defers are scoped to the surrounding function, not the surrounding block. In a function that never returns, i.e. one containing an infinite loop, defers will never execute. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA5004` | 'for { select { ...' with an empty default branch spins <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA5005` | The finalizer references the finalized object, preventing garbage collection <br/> A finalizer is a function associated with an object that runs when the garbage collector is ready to collect said object, that is when the object is no longer referenced by anything. <br/> If the finalizer references the object, however, it will always remain as the final reference to that object, preventing the garbage collector from collecting the object. The finalizer will never run, and the object will never be collected, leading to a memory leak. That is why the finalizer should instead use its first argument to operate on the object. That way, the number of references can temporarily go to zero before the object is being passed to the finalizer. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA5007` | Infinite recursive call <br/> A function that calls itself recursively needs to have an exit condition. Otherwise it will recurse forever, until the system runs out of memory. <br/> This issue can be caused by simple bugs such as forgetting to add an exit condition. It can also happen "on purpose". Some languages have tail call optimization which makes certain infinite recursive calls safe to use. Go, however, does not implement TCO, and as such a loop should be used instead. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA5008` | Invalid struct tag <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `true` |
+| `SA5010` | Impossible type assertion <br/> Some type assertions can be statically proven to be impossible. This is the case when the method sets of both arguments of the type assertion conflict with each other, for example by containing the same method with different signatures. <br/> The Go compiler already applies this check when asserting from an interface value to a concrete type. If the concrete type misses methods from the interface, or if function signatures don't match, then the type assertion can never succeed. <br/> This check applies the same logic when asserting from one interface to another. If both interface types contain the same method but with different signatures, then the type assertion can never succeed, either. <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `false` |
+| `SA5012` | Passing odd-sized slice to function expecting even size <br/> Some functions that take slices as parameters expect the slices to have an even number of elements.  Often, these functions treat elements in a slice as pairs.  For example, strings.NewReplacer takes pairs of old and new strings,  and calling it with an odd number of elements would be an error. <br/> Available since <br/> <pre>2020.2</pre><br/> <br/> Default: `false` |
+| `SA6000` | Using regexp.Match or related in a loop, should use regexp.Compile <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA6001` | Missing an optimization opportunity when indexing maps by byte slices <br/> Map keys must be comparable, which precludes the use of byte slices. This usually leads to using string keys and converting byte slices to strings. <br/> Normally, a conversion of a byte slice to a string needs to copy the data and causes allocations. The compiler, however, recognizes m\[string(b)] and uses the data of b directly, without copying it, because it knows that the data can't change during the map lookup. This leads to the counter-intuitive situation that <br/> <pre>k := string(b)<br/>println(m[k])<br/>println(m[k])</pre><br/> will be less efficient than <br/> <pre>println(m[string(b)])<br/>println(m[string(b)])</pre><br/> because the first version needs to copy and allocate, while the second one does not. <br/> For some history on this optimization, check out commit f5f5a8b6209f84961687d993b93ea0d397f5d5bf in the Go repository. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA6002` | Storing non-pointer values in sync.Pool allocates memory <br/> A sync.Pool is used to avoid unnecessary allocations and reduce the amount of work the garbage collector has to do. <br/> When passing a value that is not a pointer to a function that accepts an interface, the value needs to be placed on the heap, which means an additional allocation. Slices are a common thing to put in sync.Pools, and they're structs with 3 fields (length, capacity, and a pointer to an array). In order to avoid the extra allocation, one should store a pointer to the slice instead. <br/> See the comments on [https://go-review.googlesource.com/c/go/+/24371](https://go-review.googlesource.com/c/go/+/24371) that discuss this problem. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA6003` | Converting a string to a slice of runes before ranging over it <br/> You may want to loop over the runes in a string. Instead of converting the string to a slice of runes and looping over that, you can loop over the string itself. That is, <br/> <pre>for _, r := range s {}</pre><br/> and <br/> <pre>for _, r := range []rune(s) {}</pre><br/> will yield the same values. The first version, however, will be faster and avoid unnecessary memory allocations. <br/> Do note that if you are interested in the indices, ranging over a string and over a slice of runes will yield different indices. The first one yields byte offsets, while the second one yields indices in the slice of runes. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA6005` | Inefficient string comparison with strings.ToLower or strings.ToUpper <br/> Converting two strings to the same case and comparing them like so <br/> <pre>if strings.ToLower(s1) == strings.ToLower(s2) {<br/>    ...<br/>}</pre><br/> is significantly more expensive than comparing them with strings.EqualFold(s1, s2). This is due to memory usage as well as computational complexity. <br/> strings.ToLower will have to allocate memory for the new strings, as well as convert both strings fully, even if they differ on the very first byte. strings.EqualFold, on the other hand, compares the strings one character at a time. It doesn't need to create two intermediate strings and can return as soon as the first non-matching character has been found. <br/> For a more in-depth explanation of this issue, see [https://blog.digitalocean.com/how-to-efficiently-compare-strings-in-go/](https://blog.digitalocean.com/how-to-efficiently-compare-strings-in-go/) <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `true` |
+| `SA6006` | Using io.WriteString to write \[]byte <br/> Using io.WriteString to write a slice of bytes, as in <br/> <pre>io.WriteString(w, string(b))</pre><br/> is both unnecessary and inefficient. Converting from \[]byte to string has to allocate and copy the data, and we could simply use w.Write(b) instead. <br/> Available since <br/> <pre>2024.1</pre><br/> <br/> Default: `true` |
+| `SA9001` | Defers in range loops may not run when you expect them to <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `false` |
+| `SA9002` | Using a non-octal os.FileMode that looks like it was meant to be in octal. <br/> Available since <br/> <pre>2017.1</pre><br/> <br/> Default: `true` |
+| `SA9003` | Empty body in an if or else branch <br/> Available since <br/> <pre>2017.1, non-default</pre><br/> <br/> Default: `false` |
+| `SA9004` | Only the first constant has an explicit type <br/> In a constant declaration such as the following: <br/> <pre>const (<br/>    First byte = 1<br/>    Second     = 2<br/>)</pre><br/> the constant Second does not have the same type as the constant First. This construct shouldn't be confused with <br/> <pre>const (<br/>    First byte = iota<br/>    Second<br/>)</pre><br/> where First and Second do indeed have the same type. The type is only passed on when no explicit value is assigned to the constant. <br/> When declaring enumerations with explicit values it is therefore important not to write <br/> <pre>const (<br/>      EnumFirst EnumType = 1<br/>      EnumSecond         = 2<br/>      EnumThird          = 3<br/>)</pre><br/> This discrepancy in types can cause various confusing behaviors and bugs. <br/> ### Wrong type in variable declarations <br/> The most obvious issue with such incorrect enumerations expresses itself as a compile error: <br/> <pre>package pkg</pre><br/> <pre>const (<br/>    EnumFirst  uint8 = 1<br/>    EnumSecond       = 2<br/>)</pre><br/> <pre>func fn(useFirst bool) {<br/>    x := EnumSecond<br/>    if useFirst {<br/>        x = EnumFirst<br/>    }<br/>}</pre><br/> fails to compile with <br/> <pre>./const.go:11:5: cannot use EnumFirst (type uint8) as type int in assignment</pre><br/> ### Losing method sets <br/> A more subtle issue occurs with types that have methods and optional interfaces. Consider the following: <br/> <pre>package main</pre><br/> <pre>import "fmt"</pre><br/> <pre>type Enum int</pre><br/> <pre>func (e Enum) String() string {<br/>    return "an enum"<br/>}</pre><br/> <pre>const (<br/>    EnumFirst  Enum = 1<br/>    EnumSecond      = 2<br/>)</pre><br/> <pre>func main() {<br/>    fmt.Println(EnumFirst)<br/>    fmt.Println(EnumSecond)<br/>}</pre><br/> This code will output <br/> <pre>an enum<br/>2</pre><br/> as EnumSecond has no explicit type, and thus defaults to int. <br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `true` |
+| `SA9005` | Trying to marshal a struct with no public fields nor custom marshaling <br/> The encoding/json and encoding/xml packages only operate on exported fields in structs, not unexported ones. It is usually an error to try to (un)marshal structs that only consist of unexported fields. <br/> This check will not flag calls involving types that define custom marshaling behavior, e.g. via MarshalJSON methods. It will also not flag empty structs. <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `false` |
+| `SA9006` | Dubious bit shifting of a fixed size integer value <br/> Bit shifting a value past its size will always clear the value. <br/> For instance: <br/> <pre>v := int8(42)<br/>v >>= 8</pre><br/> will always result in 0. <br/> This check flags bit shifting operations on fixed size integer values only. That is, int, uint and uintptr are never flagged to avoid potential false positives in somewhat exotic but valid bit twiddling tricks: <br/> <pre>// Clear any value above 32 bits if integers are more than 32 bits.<br/>func f(i int) int {<br/>    v := i >> 32<br/>    v = v << 32<br/>    return i-v<br/>}</pre><br/> Available since <br/> <pre>2020.2</pre><br/> <br/> Default: `true` |
+| `SA9007` | Deleting a directory that shouldn't be deleted <br/> It is virtually never correct to delete system directories such as /tmp or the user's home directory. However, it can be fairly easy to do by mistake, for example by mistakenly using os.TempDir instead of ioutil.TempDir, or by forgetting to add a suffix to the result of os.UserHomeDir. <br/> Writing <br/> <pre>d := os.TempDir()<br/>defer os.RemoveAll(d)</pre><br/> in your unit tests will have a devastating effect on the stability of your system. <br/> This check flags attempts at deleting the following directories: <br/> \- os.TempDir - os.UserCacheDir - os.UserConfigDir - os.UserHomeDir <br/> Available since <br/> <pre>2022.1</pre><br/> <br/> Default: `false` |
+| `SA9008` | else branch of a type assertion is probably not reading the right value <br/> When declaring variables as part of an if statement (like in 'if foo := ...; foo {'), the same variables will also be in the scope of the else branch. This means that in the following example <br/> <pre>if x, ok := x.(int); ok {<br/>    // ...<br/>} else {<br/>    fmt.Printf("unexpected type %T", x)<br/>}</pre><br/> x in the else branch will refer to the x from x, ok :=; it will not refer to the x that is being type-asserted. The result of a failed type assertion is the zero value of the type that is being asserted to, so x in the else branch will always have the value 0 and the type int. <br/> Available since <br/> <pre>2022.1</pre><br/> <br/> Default: `false` |
+| `SA9009` | Ineffectual Go compiler directive <br/> A potential Go compiler directive was found, but is ineffectual as it begins with whitespace. <br/> Available since <br/> <pre>2024.1</pre><br/> <br/> Default: `true` |
+| `SA9010` | Returned function should be called in defer <br/> If you have a function such as: <br/> <pre>func f() func() {<br/>    // Do something.<br/>    return func() {<br/>        // Do something.<br/>    }<br/>}</pre><br/> Then calling that in defer: <br/> <pre>defer f()</pre><br/> Is almost always a mistake, since you typically want to call the returned function: <br/> <pre>defer f()()</pre><br/> Available since <br/> <pre>2026.2</pre><br/> <br/> Default: `true` |
+| `ST1000` | Incorrect or missing package comment <br/> Packages must have a package comment that is formatted according to the guidelines laid out in [https://go.dev/wiki/CodeReviewComments#package-comments](https://go.dev/wiki/CodeReviewComments#package-comments). <br/> Available since <br/> <pre>2019.1, non-default</pre><br/> <br/> Default: `false` |
+| `ST1001` | Dot imports are discouraged <br/> Dot imports that aren't in external test packages are discouraged. <br/> The dot\_import\_whitelist option can be used to whitelist certain imports. <br/> Quoting Go Code Review Comments: <br/> > The import . form can be useful in tests that, due to circular > dependencies, cannot be made part of the package being tested: >  >     package foo\_test >  >     import ( >         "bar/testutil" // also imports "foo" >         . "foo" >     ) >  > In this case, the test file cannot be in package foo because it > uses bar/testutil, which imports foo. So we use the import . > form to let the file pretend to be part of package foo even though > it is not. Except for this one case, do not use import . in your > programs. It makes the programs much harder to read because it is > unclear whether a name like Quux is a top-level identifier in the > current package or in an imported package. <br/> Available since <br/> <pre>2019.1</pre><br/> Options <br/> <pre>dot_import_whitelist</pre><br/> <br/> Default: `false` |
+| `ST1003` | Poorly chosen identifier <br/> Identifiers, such as variable and package names, follow certain rules. <br/> See the following links for details: <br/> \- [https://go.dev/doc/effective\_go#package-names](https://go.dev/doc/effective_go#package-names) - [https://go.dev/doc/effective\_go#mixed-caps](https://go.dev/doc/effective_go#mixed-caps) - [https://go.dev/wiki/CodeReviewComments#initialisms](https://go.dev/wiki/CodeReviewComments#initialisms) - [https://go.dev/wiki/CodeReviewComments#variable-names](https://go.dev/wiki/CodeReviewComments#variable-names) <br/> Available since <br/> <pre>2019.1, non-default</pre><br/> Options <br/> <pre>initialisms</pre><br/> <br/> Default: `false` |
+| `ST1005` | Incorrectly formatted error string <br/> Error strings follow a set of guidelines to ensure uniformity and good composability. <br/> Quoting Go Code Review Comments: <br/> > Error strings should not be capitalized (unless beginning with > proper nouns or acronyms) or end with punctuation, since they are > usually printed following other context. That is, use > fmt.Errorf("something bad") not fmt.Errorf("Something bad"), so > that log.Printf("Reading %s: %v", filename, err) formats without a > spurious capital letter mid-message. <br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `false` |
+| `ST1006` | Poorly chosen receiver name <br/> Quoting Go Code Review Comments: <br/> > The name of a method's receiver should be a reflection of its > identity; often a one or two letter abbreviation of its type > suffices (such as "c" or "cl" for "Client"). Don't use generic > names such as "me", "this" or "self", identifiers typical of > object-oriented languages that place more emphasis on methods as > opposed to functions. The name need not be as descriptive as that > of a method argument, as its role is obvious and serves no > documentary purpose. It can be very short as it will appear on > almost every line of every method of the type; familiarity admits > brevity. Be consistent, too: if you call the receiver "c" in one > method, don't call it "cl" in another. <br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `false` |
+| `ST1008` | A function's error value should be its last return value <br/> A function's error value should be its last return value. <br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `false` |
+| `ST1011` | Poorly chosen name for variable of type time.Duration <br/> time.Duration values represent an amount of time, which is represented as a count of nanoseconds. An expression like 5 \* time.Microsecond yields the value 5000. It is therefore not appropriate to suffix a variable of type time.Duration with any time unit, such as Msec or Milli. <br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `false` |
+| `ST1012` | Poorly chosen name for error variable <br/> Error variables that are part of an API should be called errFoo or ErrFoo. <br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `false` |
+| `ST1013` | Should use constants for HTTP error codes, not magic numbers <br/> HTTP has a tremendous number of status codes. While some of those are well known (200, 400, 404, 500), most of them are not. The net/http package provides constants for all status codes that are part of the various specifications. It is recommended to use these constants instead of hard-coding magic numbers, to vastly improve the readability of your code. <br/> Available since <br/> <pre>2019.1</pre><br/> Options <br/> <pre>http_status_code_whitelist</pre><br/> <br/> Default: `false` |
+| `ST1015` | A switch's default case should be the first or last case <br/> Available since <br/> <pre>2019.1</pre><br/> <br/> Default: `false` |
+| `ST1016` | Use consistent method receiver names <br/> Available since <br/> <pre>2019.1, non-default</pre><br/> <br/> Default: `false` |
+| `ST1017` | Don't use Yoda conditions <br/> Yoda conditions are conditions of the kind 'if 42 == x', where the literal is on the left side of the comparison. These are a common idiom in languages in which assignment is an expression, to avoid bugs of the kind 'if (x = 42)'. In Go, which doesn't allow for this kind of bug, we prefer the more idiomatic 'if x == 42'. <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `false` |
+| `ST1018` | Avoid zero-width and control characters in string literals <br/> Available since <br/> <pre>2019.2</pre><br/> <br/> Default: `false` |
+| `ST1019` | Importing the same package multiple times <br/> Go allows importing the same package multiple times, as long as different import aliases are being used. That is, the following bit of code is valid: <br/> <pre>import (<br/>    "fmt"<br/>    fumpt "fmt"<br/>    format "fmt"<br/>)</pre><br/> However, this is very rarely done on purpose. Usually, it is a sign of code that got refactored, accidentally adding duplicate import statements. It is also a rarely known feature, which may contribute to confusion. <br/> Do note that sometimes, this feature may be used intentionally (see for example [https://github.com/golang/go/commit/3409ce39bfd7584523b7a8c150a310cea92d879d](https://github.com/golang/go/commit/3409ce39bfd7584523b7a8c150a310cea92d879d)) – if you want to allow this pattern in your code base, you're advised to disable this check. <br/> It is acceptable to import the same package twice if one of the imports uses the blank identifier. This is allowed in order to increase resilience against erroneous changes when using the same package for its side effects as well as its exported API. <br/> Available since <br/> <pre>2020.1</pre><br/> <br/> Default: `false` |
+| `ST1020` | The documentation of an exported function should start with the function's name <br/> Doc comments work best as complete sentences, which allow a wide variety of automated presentations. The first sentence should be a one-sentence summary that starts with the name being declared. <br/> If every doc comment begins with the name of the item it describes, you can use the doc subcommand of the go tool and run the output through grep. <br/> See [https://go.dev/doc/effective\_go#commentary](https://go.dev/doc/effective_go#commentary) for more information on how to write good documentation. <br/> Available since <br/> <pre>2020.1, non-default</pre><br/> <br/> Default: `false` |
+| `ST1021` | The documentation of an exported type should start with type's name <br/> Doc comments work best as complete sentences, which allow a wide variety of automated presentations. The first sentence should be a one-sentence summary that starts with the name being declared. <br/> If every doc comment begins with the name of the item it describes, you can use the doc subcommand of the go tool and run the output through grep. <br/> See [https://go.dev/doc/effective\_go#commentary](https://go.dev/doc/effective_go#commentary) for more information on how to write good documentation. <br/> Available since <br/> <pre>2020.1, non-default</pre><br/> <br/> Default: `false` |
+| `ST1022` | The documentation of an exported variable or constant should start with variable's name <br/> Doc comments work best as complete sentences, which allow a wide variety of automated presentations. The first sentence should be a one-sentence summary that starts with the name being declared. <br/> If every doc comment begins with the name of the item it describes, you can use the doc subcommand of the go tool and run the output through grep. <br/> See [https://go.dev/doc/effective\_go#commentary](https://go.dev/doc/effective_go#commentary) for more information on how to write good documentation. <br/> Available since <br/> <pre>2020.1, non-default</pre><br/> <br/> Default: `false` |
+| `ST1023` | Redundant type in variable declaration <br/> Available since <br/> <pre>2021.1, non-default</pre><br/> <br/> Default: `false` |
+| `any` | replace interface{} with any <br/> The any analyzer suggests replacing uses of the empty interface type, \`interface{}\`, with the \`any\` alias, which was introduced in Go 1.18. This is a purely stylistic change that makes code more readable. <br/> <br/> Default: `true` |
+| `appendclipped` | simplify append chains using slices.Concat <br/> The appendclipped analyzer suggests replacing chains of append calls with a single call to slices.Concat, which was added in Go 1.21. For example, append(append(s, s1...), s2...) would be simplified to slices.Concat(s, s1, s2). <br/> In the simple case of appending to a newly allocated slice, such as append(\[]T(nil), s...), the analyzer suggests the more concise slices.Clone(s). For byte slices, it will prefer bytes.Clone if the "bytes" package is already imported. <br/> Since the replacement (slices.Concat, or slices.Clone) allocates a new slice, any slices.Clone or bytes.Clone wrapping one of the operands is redundant and is removed, e.g. append(append(\[]T{}, slices.Clone(s)...), t...) becomes slices.Concat(s, t). The clone of os.Environ in append(\[]string(nil), os.Environ()...) is likewise elided. <br/> This fix is only applied when the base of the append tower is a "clipped" slice, meaning its length and capacity are equal (e.g. x\[:0:0] or \[]T{}). This is to avoid changing program behavior by eliminating intended side effects on the base slice's underlying array. <br/> This analyzer is currently disabled by default as the transformation does not preserve the nilness of the base slice in all cases; see [https://go.dev/issue/73557](https://go.dev/issue/73557). <br/> <br/> Default: `false` |
+| `appends` | check for missing values after append <br/> This checker reports calls to append that pass no values to be appended to the slice. <br/> <pre>s := []string{"a", "b", "c"}<br/>_ = append(s)</pre><br/> Such calls are always no-ops and often indicate an underlying mistake. <br/> <br/> Default: `true` |
+| `asmdecl` | report mismatches between assembly files and Go declarations <br/> <br/> Default: `true` |
+| `assign` | check for useless assignments <br/> This checker reports assignments of the form x = x or a\[i] = a\[i]. These are almost always useless, and even when they aren't they are usually a mistake. <br/> <br/> Default: `true` |
+| `atomic` | check for common mistakes using the sync/atomic package <br/> The atomic checker looks for assignment statements of the form: <br/> <pre>x = atomic.AddUint64(&x, 1)</pre><br/> which are not atomic. <br/> <br/> Default: `true` |
+| `atomicalign` | check for non-64-bits-aligned arguments to sync/atomic functions <br/> <br/> Default: `true` |
+| `atomictypes` | replace basic types in sync/atomic calls with atomic types <br/> The atomictypes analyzer suggests replacing the primitive sync/atomic functions with the strongly typed atomic wrapper types introduced in Go1.19 (e.g. atomic.Int32). For example, <br/> <pre>var x int32<br/>atomic.AddInt32(&x, 1)</pre><br/> would become <br/> <pre>var x atomic.Int32<br/>x.Add(1)</pre><br/> The atomic types are safer because they don't allow non-atomic access, which is a common source of bugs. These types also resolve memory alignment issues that plagued the old atomic functions on 32-bit architectures. <br/> <br/> Default: `true` |
+| `bloop` | replace for-range over b.N with b.Loop <br/> The bloop analyzer suggests replacing benchmark loops of the form \`for i := 0; i \< b.N; i++\` or \`for range b.N\` with the more modern \`for b.Loop()\`, which was added in Go 1.24. <br/> This change makes benchmark code more readable and also removes the need for manual timer control, so any preceding calls to b.StartTimer, b.StopTimer, or b.ResetTimer within the same function will also be removed. <br/> Caveats: The b.Loop() method is designed to prevent the compiler from optimizing away the benchmark loop, which can occasionally result in slower execution due to increased allocations in some specific cases. Since its fix may change the performance of nanosecond-scale benchmarks, bloop is disabled by default in the \`go fix\` analyzer suite; see golang/go#74967. <br/> <br/> Default: `true` |
+| `bools` | check for common mistakes involving boolean operators <br/> <br/> Default: `true` |
+| `buildtag` | check //go:build and // +build directives <br/> <br/> Default: `true` |
+| `cgocall` | detect some violations of the cgo pointer passing rules <br/> Check for invalid cgo pointer passing. This looks for code that uses cgo to call C code passing values whose types are almost always invalid according to the cgo pointer sharing rules. Specifically, it warns about attempts to pass a Go chan, map, func, or slice to C, either directly, or via a pointer, array, or struct. <br/> <br/> Default: `true` |
 | `composites` | check for unkeyed composite literals <br/> This analyzer reports a diagnostic for composite literals of struct types imported from another package that do not use the field-keyed syntax. Such literals are fragile because the addition of a new field (even if unexported) to the struct will cause compilation to fail. <br/> As an example, <br/> <pre>err = &net.DNSConfigError{err}</pre><br/> should be replaced by: <br/> <pre>err = &net.DNSConfigError{Err: err}</pre><br/> <br/> Default: `true` |
-| `copylocks` | check for locks erroneously passed by value <br/> Inadvertently copying a value containing a lock, such as sync.Mutex or sync.WaitGroup, may cause both copies to malfunction. Generally such values should be referred to through a pointer. <br/> Default: `true` |
-| `deepequalerrors` | check for calls of reflect.DeepEqual on error values <br/> The deepequalerrors checker looks for calls of the form: <br/>     reflect.DeepEqual(err1, err2) <br/> where err1 and err2 are errors. Using reflect.DeepEqual to compare errors is discouraged. <br/> Default: `true` |
-| `errorsas` | report passing non-pointer or non-error values to errors.As <br/> The errorsas analysis reports calls to errors.As where the type of the second argument is not a pointer to a type implementing error. <br/> Default: `true` |
-| `fieldalignment` | find structs that would use less memory if their fields were sorted <br/> This analyzer find structs that can be rearranged to use less memory, and provides a suggested edit with the optimal order. <br/> Note that there are two different diagnostics reported. One checks struct size, and the other reports "pointer bytes" used. Pointer bytes is how many bytes of the object that the garbage collector has to potentially scan for pointers, for example: <br/> <pre>struct { uint32; string }</pre><br/> have 16 pointer bytes because the garbage collector has to scan up through the string's inner pointer. <br/> <pre>struct { string; *uint32 }</pre><br/> has 24 pointer bytes because it has to scan further through the *uint32. <br/> <pre>struct { string; uint32 }</pre><br/> has 8 because it can stop immediately after the string pointer. <br/> <br/> Default: `false` |
-| `fillreturns` | suggested fixes for "wrong number of return values (want %d, got %d)" <br/> This checker provides suggested fixes for type errors of the type "wrong number of return values (want %d, got %d)". For example: <pre>func m() (int, string, *bool, error) {<br/>	return<br/>}</pre>will turn into <pre>func m() (int, string, *bool, error) {<br/>	return 0, "", nil, nil<br/>}</pre><br/> This functionality is similar to https://github.com/sqs/goreturns. <br/> <br/> Default: `true` |
-| `fillstruct` | note incomplete struct initializations <br/> This analyzer provides diagnostics for any struct literals that do not have any fields initialized. Because the suggested fix for this analysis is expensive to compute, callers should compute it separately, using the SuggestedFix function below. <br/> <br/> Default: `true` |
-| `httpresponse` | check for mistakes using HTTP responses <br/> A common mistake when using the net/http package is to defer a function call to close the http.Response Body before checking the error that determines whether the response is valid: <br/> <pre>resp, err := http.Head(url)<br/>defer resp.Body.Close()<br/>if err != nil {<br/>	log.Fatal(err)<br/>}<br/>// (defer statement belongs here)</pre><br/> This checker helps uncover latent nil dereference bugs by reporting a diagnostic for such mistakes. <br/> Default: `true` |
+| `copylocks` | check for locks erroneously passed by value <br/> Inadvertently copying a value containing a lock, such as sync.Mutex or sync.WaitGroup, may cause both copies to malfunction. Generally such values should be referred to through a pointer. <br/> <br/> Default: `true` |
+| `deepequalerrors` | check for calls of reflect.DeepEqual on error values <br/> The deepequalerrors checker looks for calls of the form: <br/> <pre>reflect.DeepEqual(err1, err2)</pre><br/> where err1 and err2 are errors. Using reflect.DeepEqual to compare errors is discouraged. <br/> <br/> Default: `true` |
+| `defers` | report common mistakes in defer statements <br/> The defers analyzer reports a diagnostic when a defer statement would result in a non-deferred call to time.Since, as experience has shown that this is nearly always a mistake. <br/> For example: <br/> <pre>start := time.Now()<br/>...<br/>defer recordLatency(time.Since(start)) // error: call to time.Since is not deferred</pre><br/> The correct code is: <br/> <pre>defer func() { recordLatency(time.Since(start)) }()</pre><br/> <br/> Default: `true` |
+| `deprecated` | check for use of deprecated identifiers <br/> The deprecated analyzer looks for deprecated symbols and package imports. <br/> See [https://go.dev/wiki/Deprecated](https://go.dev/wiki/Deprecated) to learn about Go's convention for documenting and signaling deprecated identifiers. <br/> <br/> Default: `true` |
+| `directive` | check Go toolchain directives such as //go:debug <br/> This analyzer checks for problems with known Go toolchain directives in all Go source files in a package directory, even those excluded by //go:build constraints, and all non-Go source files too. <br/> For //go:debug (see [https://go.dev/doc/godebug](https://go.dev/doc/godebug)), the analyzer checks that the directives are placed only in Go source files, only above the package comment, and only in package main or \*\_test.go files. <br/> Support for other known directives may be added in the future. <br/> This analyzer does not check //go:build, which is handled by the buildtag analyzer. <br/> <br/> Default: `true` |
+| `embed` | check //go:embed directive usage <br/> This analyzer checks that the embed package is imported if //go:embed directives are present, providing a suggested fix to add the import if it is missing. <br/> This analyzer also checks that //go:embed directives precede the declaration of a single variable. <br/> <br/> Default: `true` |
+| `embedlit` | simplify references to embedded fields in composite literals <br/> The embedlit analyzer suggests removing redundant embedded field type specifiers from composite literals. Go1.27 introduced the ability to directly initialize fields promoted from embedded struct types without a nested literal. For example, given the following structs: <br/> <pre>type T struct {<br/>	U<br/>}</pre><br/> <pre>type U struct {<br/>	x int<br/>}</pre><br/> A composite literal such as <br/> <pre>t := T{U: U{x: 1}}</pre><br/> would become <br/> <pre>t := T{x: 1}</pre><br/> <br/> Default: `true` |
+| `errorsas` | report passing non-pointer or non-error values to errors.As <br/> The errorsas analyzer reports calls to errors.As where the type of the second argument is not a pointer to a type implementing error. For example: <br/> <pre>var unwrappedErr net.DNSError<br/>errors.As(err, unwrappedErr) // should use &unwrappedErr, DNSError.Error has a pointer receiver</pre><br/> <br/> Default: `true` |
+| `errorsastype` | replace errors.As with errors.AsType\[T] <br/> This analyzer suggests fixes to simplify uses of [errors.As](https://pkg.go.dev/errors#As) of this form: <br/> <pre>var myerr *MyErr<br/>if errors.As(err, &myerr) {<br/>	handle(myerr)<br/>}</pre><br/> by using the less error-prone generic [errors.AsType](https://pkg.go.dev/errors#AsType) function, introduced in Go 1.26: <br/> <pre>if myerr, ok := errors.AsType[*MyErr](err); ok {<br/>	handle(myerr)<br/>}</pre><br/> The fix is only offered if the var declaration has the form shown and there are no uses of myerr outside the if statement. <br/> <br/> Default: `true` |
+| `errorsastypeshadow` | report shadowing of errors.AsType\[T] in if/else chains <br/> For example: <br/> <pre>err := f()<br/>if err, ok := errors.AsType[*FooErr](err); ok {<br/>    useFoo(err)<br/>} else if err, ok := errors.AsType[*BarErr](err); ok {<br/>    useBar(err)<br/>}</pre><br/> In this case, the second call to errors.AsType does not operate on the original error. Instead, its operand is the zero value of type \*FooErr produced by the first if statement; this is invariably a mistake. <br/> <br/> Default: `true` |
+| `fieldalignment` | find structs that would use less memory if their fields were sorted <br/> This analyzer finds structs that can be rearranged to use less memory, and provides a suggested edit with the most compact order. <br/> Note that there are two different diagnostics reported. One checks struct size, and the other reports "pointer bytes" used. Pointer bytes is how many bytes of the object that the garbage collector has to potentially scan for pointers, for example: <br/> <pre>struct { uint32; string }</pre><br/> have 16 pointer bytes because the garbage collector has to scan up through the string's inner pointer. <br/> <pre>struct { string; *uint32 }</pre><br/> has 24 pointer bytes because it has to scan further through the \*uint32. <br/> <pre>struct { string; uint32 }</pre><br/> has 8 because it can stop immediately after the string pointer. <br/> Be aware that the most compact order is not always the most efficient. In rare cases it may cause two variables each updated by its own goroutine to occupy the same CPU cache line, inducing a form of memory contention known as "false sharing" that slows down both goroutines. <br/> Unlike most analyzers, which report likely mistakes, the diagnostics produced by fieldanalyzer very rarely indicate a significant problem, so the analyzer is not included in typical suites such as vet or gopls. Use this standalone command to run it on your code: <br/> <pre>$ go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest<br/>$ fieldalignment [packages]</pre><br/> <br/> Default: `false` |
+| `fillreturns` | suggest fixes for errors due to an incorrect number of return values <br/> This checker provides suggested fixes for type errors of the type "wrong number of return values (want %d, got %d)". For example: <br/> <pre>func m() (int, string, *bool, error) {<br/>	return<br/>}</pre><br/> will turn into <br/> <pre>func m() (int, string, *bool, error) {<br/>	return 0, "", nil, nil<br/>}</pre><br/> This functionality is similar to [https://github.com/sqs/goreturns](https://github.com/sqs/goreturns). <br/> <br/> Default: `true` |
+| `fmtappendf` | replace \[]byte(fmt.Sprintf) with fmt.Appendf <br/> The fmtappendf analyzer suggests replacing \`\[]byte(fmt.Sprintf(...))\` with \`fmt.Appendf(nil, ...)\`. This avoids the intermediate allocation of a string by Sprintf, making the code more efficient. The suggestion also applies to fmt.Sprint and fmt.Sprintln. <br/> Since its fix is not a Pareto improvement, fmtappendf is disabled by default in the \`go fix\` analyzer suite; see golang/go#77581. <br/> <br/> Default: `true` |
+| `forvar` | remove redundant re-declaration of loop variables <br/> The forvar analyzer removes unnecessary shadowing of loop variables. Before Go 1.22, it was common to write \`for \_, x := range s { x := x ... }\` to create a fresh variable for each iteration. Go 1.22 changed the semantics of \`for\` loops, making this pattern redundant. This analyzer removes the unnecessary \`x := x\` statement. <br/> This fix only applies to \`range\` loops. <br/> <br/> Default: `true` |
+| `framepointer` | report assembly that clobbers the frame pointer before saving it <br/> <br/> Default: `true` |
+| `hostport` | check format of addresses passed to net.Dial <br/> This analyzer flags code that produce network address strings using fmt.Sprintf, as in this example: <br/> <pre>addr := fmt.Sprintf("%s:%d", host, 12345) // "will not work with IPv6"<br/>...<br/>conn, err := net.Dial("tcp", addr)       // "when passed to dial here"</pre><br/> The analyzer suggests a fix to use the correct approach, a call to net.JoinHostPort: <br/> <pre>addr := net.JoinHostPort(host, "12345")<br/>...<br/>conn, err := net.Dial("tcp", addr)</pre><br/> A similar diagnostic and fix are produced for a format string of "%s:%s". <br/> <br/> Default: `true` |
+| `httpresponse` | check for mistakes using HTTP responses <br/> A common mistake when using the net/http package is to defer a function call to close the http.Response Body before checking the error that determines whether the response is valid: <br/> <pre>resp, err := http.Head(url)<br/>defer resp.Body.Close()<br/>if err != nil {<br/>	log.Fatal(err)<br/>}<br/>// (defer statement belongs here)</pre><br/> This checker helps uncover latent nil dereference bugs by reporting a diagnostic for such mistakes. <br/> <br/> Default: `true` |
 | `ifaceassert` | detect impossible interface-to-interface type assertions <br/> This checker flags type assertions v.(T) and corresponding type-switch cases in which the static type V of v is an interface that cannot possibly implement the target interface T. This occurs when V and T contain methods with the same name but different signatures. Example: <br/> <pre>var v interface {<br/>	Read()<br/>}<br/>_ = v.(io.Reader)</pre><br/> The Read method in v has a different signature than the Read method in io.Reader, so this assertion cannot succeed. <br/> <br/> Default: `true` |
-| `loopclosure` | check references to loop variables from within nested functions <br/> This analyzer checks for references to loop variables from within a function literal inside the loop body. It checks only instances where the function literal is called in a defer or go statement that is the last statement in the loop body, as otherwise we would need whole program analysis. <br/> For example: <br/> <pre>for i, v := range s {<br/>	go func() {<br/>		println(i, v) // not what you might expect<br/>	}()<br/>}</pre><br/> See: https://golang.org/doc/go_faq.html#closures_and_goroutines <br/> Default: `true` |
-| `lostcancel` | check cancel func returned by context.WithCancel is called <br/> The cancellation function returned by context.WithCancel, WithTimeout, and WithDeadline must be called or the new context will remain live until its parent context is cancelled. (The background context is never cancelled.) <br/> Default: `true` |
-| `nilfunc` | check for useless comparisons between functions and nil <br/> A useless comparison is one like f == nil as opposed to f() == nil. <br/> Default: `true` |
-| `nilness` | check for redundant or impossible nil comparisons <br/> The nilness checker inspects the control-flow graph of each function in a package and reports nil pointer dereferences, degenerate nil pointers, and panics with nil values. A degenerate comparison is of the form x==nil or x!=nil where x is statically known to be nil or non-nil. These are often a mistake, especially in control flow related to errors. Panics with nil values are checked because they are not detectable by <br/> <pre>if r := recover(); r != nil {</pre><br/> This check reports conditions such as: <br/> <pre>if f == nil { // impossible condition (f is a function)<br/>}</pre><br/> and: <br/> <pre>p := &v<br/>...<br/>if p != nil { // tautological condition<br/>}</pre><br/> and: <br/> <pre>if p == nil {<br/>	print(*p) // nil dereference<br/>}</pre><br/> and: <br/> <pre>if p == nil {<br/>	panic(p)<br/>}</pre><br/> <br/> Default: `false` |
-| `nonewvars` | suggested fixes for "no new vars on left side of :=" <br/> This checker provides suggested fixes for type errors of the type "no new vars on left side of :=". For example: <pre>z := 1<br/>z := 2</pre>will turn into <pre>z := 1<br/>z = 2</pre><br/> <br/> Default: `true` |
-| `noresultvalues` | suggested fixes for "no result values expected" <br/> This checker provides suggested fixes for type errors of the type "no result values expected". For example: <pre>func z() { return nil }</pre>will turn into <pre>func z() { return }</pre><br/> <br/> Default: `true` |
-| `printf` | check consistency of Printf format strings and arguments <br/> The check applies to known functions (for example, those in package fmt) as well as any detected wrappers of known functions. <br/> A function that wants to avail itself of printf checking but is not found by this analyzer's heuristics (for example, due to use of dynamic calls) can insert a bogus call: <br/> <pre>if false {<br/>	_ = fmt.Sprintf(format, args...) // enable printf checking<br/>}</pre><br/> The -funcs flag specifies a comma-separated list of names of additional known formatting functions or methods. If the name contains a period, it must denote a specific function using one of the following forms: <br/> <pre>dir/pkg.Function<br/>dir/pkg.Type.Method<br/>(*dir/pkg.Type).Method</pre><br/> Otherwise the name is interpreted as a case-insensitive unqualified identifier such as "errorf". Either way, if a listed name ends in f, the function is assumed to be Printf-like, taking a format string before the argument list. Otherwise it is assumed to be Print-like, taking a list of arguments with no format string. <br/> <br/> Default: `true` |
+| `importcomment` | remove obsolete comments specifying canonical import path <br/> The importcomment analyzer removes comments specifying the canonical import path, such as <br/> <pre>package foo // import "example.com/foo"</pre><br/> The go command enforced these comments in GOPATH mode via "go get", but ignores them in module mode, so they are obsolete once the package belongs to a module. The fix removes the comment. <br/> <br/> Default: `true` |
+| `infertypeargs` | check for unnecessary type arguments in call expressions <br/> Explicit type arguments may be omitted from call expressions if they can be inferred from function arguments, or from other type arguments: <br/> <pre>func f[T any](T) {}</pre><br/> <pre>func _() {<br/>	f[string]("foo") // string could be inferred<br/>}</pre><br/> <br/> Default: `true` |
+| `inline` | apply fixes based on 'go:fix inline' comment directives <br/> The inline analyzer inlines functions, constants, and type aliases that are marked for inlining. <br/> Use this command to apply (just) inline fixes en masse: <br/> <pre>$ go fix -inline ./...</pre><br/> \## Functions <br/> Given a function that is marked for inlining, like this one: <br/> <pre>//go:fix inline<br/>func Square(x int) int { return Pow(x, 2) }</pre><br/> this analyzer will recommend that calls to the function elsewhere, in the same or other packages, should be inlined. <br/> Inlining can be used to move off of a deprecated function: <br/> <pre>// Deprecated: prefer Pow(x, 2).<br/>//go:fix inline<br/>func Square(x int) int { return Pow(x, 2) }</pre><br/> It can also be used to move off of an obsolete package, as when the import path has changed or a higher major version is available: <br/> <pre>package pkg</pre><br/> <pre>import pkg2 "pkg/v2"</pre><br/> <pre>//go:fix inline<br/>func F() { pkg2.F(nil) }</pre><br/> Replacing a call pkg.F() by pkg2.F(nil) can have no effect on the program, so this mechanism provides a low-risk way to update large numbers of calls. We recommend, where possible, expressing the old API in terms of the new one to enable automatic migration. <br/> The inliner takes care to avoid behavior changes, even subtle ones, such as changes to the order in which argument expressions are evaluated. When it cannot safely eliminate all parameter variables, it may introduce a "binding declaration" of the form <br/> <pre>var params = args</pre><br/> to evaluate argument expressions in the correct order and bind them to parameter variables. Since the resulting code transformation may be stylistically suboptimal, such inlinings may be disabled by specifying the -inline.allow\_binding\_decl=false flag to the analyzer driver. <br/> (In cases where it is not safe to "reduce" a call—that is, to replace a call f(x) by the body of function f, suitably substituted—the inliner machinery is capable of replacing f by a function literal, func(){...}(). However, the inline analyzer discards all such "literalizations" unconditionally, again on grounds of style.) <br/> \## Constants <br/> Given a constant that is marked for inlining, like this one: <br/> <pre>//go:fix inline<br/>const Ptr = Pointer</pre><br/> this analyzer will recommend that uses of Ptr should be replaced with Pointer. <br/> As with functions, inlining can be used to replace deprecated constants and constants in obsolete packages. <br/> A constant definition can be marked for inlining only if it refers to another named constant. <br/> The "//go:fix inline" comment must appear before a single const declaration on its own, as above; before a const declaration that is part of a group, as in this case: <br/> <pre>const (<br/>   C = 1<br/>   //go:fix inline<br/>   Ptr = Pointer<br/>)</pre><br/> or before a group, applying to every constant in the group: <br/> <pre>//go:fix inline<br/>const (<br/>	Ptr = Pointer<br/>	Val = Value<br/>)</pre><br/> \## Type aliases <br/> Similar to named constants, a type alias can also be marked for inlining: <br/> <pre>//go:fix inline<br/>type A = newpkg.A</pre><br/> The analyzer will replace all references to the annotated type (A) by the type on the right-hand side of the declaration (newpkg.A). <br/> \## Tests <br/> A use of a function, named constant, or type alias X from its dedicated test (TestX), is not inlined, since the purpose of the test is to exercise X itself, even if it is deprecated and other uses of it should be inlined. This applies to benchmarks and examples too, and follows the usual conventions of test function naming. <br/> Similarly, if the symbol X is declared in a file named foo.go, any use of it within a file named foo\_test.go will also not be inlined. <br/> <br/> Default: `true` |
+| `loopclosure` | check references to loop variables from within nested functions <br/> This analyzer reports places where a function literal references the iteration variable of an enclosing loop, and the loop calls the function in such a way (e.g. with go or defer) that it may outlive the loop iteration and possibly observe the wrong value of the variable. <br/> Note: An iteration variable can only outlive a loop iteration in Go versions \<=1.21. In Go 1.22 and later, the loop variable lifetimes changed to create a new iteration variable per loop iteration. (See go.dev/issue/60078.) <br/> In this example, all the deferred functions run after the loop has completed, so all observe the final value of v \[\<go1.22]. <br/> <pre>for _, v := range list {<br/>    defer func() {<br/>        use(v) // incorrect<br/>    }()<br/>}</pre><br/> One fix is to create a new variable for each iteration of the loop: <br/> <pre>for _, v := range list {<br/>    v := v // new var per iteration<br/>    defer func() {<br/>        use(v) // ok<br/>    }()<br/>}</pre><br/> After Go version 1.22, the previous two for loops are equivalent and both are correct. <br/> The next example uses a go statement and has a similar problem \[\<go1.22]. In addition, it has a data race because the loop updates v concurrent with the goroutines accessing it. <br/> <pre>for _, v := range elem {<br/>    go func() {<br/>        use(v)  // incorrect, and a data race<br/>    }()<br/>}</pre><br/> A fix is the same as before. The checker also reports problems in goroutines started by golang.org/x/sync/errgroup.Group. A hard-to-spot variant of this form is common in parallel tests: <br/> <pre>func Test(t *testing.T) {<br/>    for _, test := range tests {<br/>        t.Run(test.name, func(t *testing.T) {<br/>            t.Parallel()<br/>            use(test) // incorrect, and a data race<br/>        })<br/>    }<br/>}</pre><br/> The t.Parallel() call causes the rest of the function to execute concurrent with the loop \[\<go1.22]. <br/> The analyzer reports references only in the last statement, as it is not deep enough to understand the effects of subsequent statements that might render the reference benign. ("Last statement" is defined recursively in compound statements such as if, switch, and select.) <br/> See: [https://golang.org/doc/go\_faq.html#closures\_and\_goroutines](https://golang.org/doc/go_faq.html#closures_and_goroutines) <br/> <br/> Default: `true` |
+| `lostcancel` | check cancel func returned by context.WithCancel is called <br/> The cancellation function returned by context.WithCancel, WithTimeout, WithDeadline and variants such as WithCancelCause must be called, or the new context will remain live until its parent context is cancelled. (The background context is never cancelled.) <br/> <br/> Default: `true` |
+| `maprange` | checks for unnecessary calls to maps.Keys and maps.Values in range statements <br/> Consider a loop written like this: <br/> <pre>for val := range maps.Values(m) {<br/>	fmt.Println(val)<br/>}</pre><br/> This should instead be written without the call to maps.Values: <br/> <pre>for _, val := range m {<br/>	fmt.Println(val)<br/>}</pre><br/> golang.org/x/exp/maps returns slices for Keys/Values instead of iterators, but unnecessary calls should similarly be removed: <br/> <pre>for _, key := range maps.Keys(m) {<br/>	fmt.Println(key)<br/>}</pre><br/> should be rewritten as: <br/> <pre>for key := range m {<br/>	fmt.Println(key)<br/>}</pre><br/> <br/> Default: `true` |
+| `mapsloop` | replace explicit loops over maps with calls to maps package <br/> The mapsloop analyzer replaces loops of the form <br/> <pre>for k, v := range x { m[k] = v }</pre><br/> with a single call to a function from the \`maps\` package, added in Go 1.23. Depending on the context, this could be \`maps.Copy\`, \`maps.Insert\`, \`maps.Clone\`, or \`maps.Collect\`. <br/> The transformation to \`maps.Clone\` is applied conservatively, as it preserves the nilness of the source map, which may be a subtle change in behavior if the original code did not handle a nil map in the same way. <br/> <br/> Default: `true` |
+| `minmax` | replace if/else statements with calls to min or max <br/> The minmax analyzer simplifies conditional assignments by suggesting the use of the built-in \`min\` and \`max\` functions, introduced in Go 1.21. For example, <br/> <pre>if a < b { x = a } else { x = b }</pre><br/> is replaced by <br/> <pre>x = min(a, b).</pre><br/> This analyzer avoids making suggestions for floating-point types, as the behavior of \`min\` and \`max\` with NaN values can differ from the original if/else statement. <br/> <br/> Default: `true` |
+| `newexpr` | simplify code by using go1.26's new(expr) <br/> This analyzer finds declarations of functions of this form: <br/> <pre>func varOf(x int) *int { return &x }</pre><br/> and suggests a fix to turn them into inlinable wrappers around go1.26's built-in new(expr) function: <br/> <pre>//go:fix inline<br/>func varOf(x int) *int { return new(x) }</pre><br/> (The directive comment causes the 'inline' analyzer to suggest that calls to such functions are inlined.) <br/> In addition, this analyzer suggests a fix for each call to one of the functions before it is transformed, so that <br/> <pre>use(varOf(123))</pre><br/> is replaced by: <br/> <pre>use(new(123))</pre><br/> Wrapper functions such as varOf are common when working with Go serialization packages such as for JSON or protobuf, where pointers are often used to express optionality. <br/> <br/> Default: `true` |
+| `nilfunc` | check for useless comparisons between functions and nil <br/> A useless comparison is one like f == nil as opposed to f() == nil. <br/> <br/> Default: `true` |
+| `nilness` | check for redundant or impossible nil comparisons <br/> The nilness checker inspects the control-flow graph of each function in a package and reports nil pointer dereferences, degenerate nil pointers, and panics with nil values. A degenerate comparison is of the form x==nil or x!=nil where x is statically known to be nil or non-nil. These are often a mistake, especially in control flow related to errors. Panics with nil values are checked because they are not detectable by <br/> <pre>if r := recover(); r != nil {</pre><br/> This check reports conditions such as: <br/> <pre>if f == nil { // impossible condition (f is a function)<br/>}</pre><br/> and: <br/> <pre>p := &v<br/>...<br/>if p != nil { // tautological condition<br/>}</pre><br/> and: <br/> <pre>if p == nil {<br/>	print(*p) // nil dereference<br/>}</pre><br/> and: <br/> <pre>if p == nil {<br/>	panic(p)<br/>}</pre><br/> Sometimes the control flow may be quite complex, making bugs hard to spot. In the example below, the err.Error expression is guaranteed to panic because, after the first return, err must be nil. The intervening loop is just a distraction. <br/> <pre>...<br/>err := g.Wait()<br/>if err != nil {<br/>	return err<br/>}<br/>partialSuccess := false<br/>for _, err := range errs {<br/>	if err == nil {<br/>		partialSuccess = true<br/>		break<br/>	}<br/>}<br/>if partialSuccess {<br/>	reportStatus(StatusMessage{<br/>		Code:   code.ERROR,<br/>		Detail: err.Error(), // "nil dereference in dynamic method call"<br/>	})<br/>	return nil<br/>}</pre><br/> ... <br/> <br/> Default: `true` |
+| `nonewvars` | suggested fixes for "no new vars on left side of :=" <br/> This checker provides suggested fixes for type errors of the type "no new vars on left side of :=". For example: <br/> <pre>z := 1<br/>z := 2</pre><br/> will turn into <br/> <pre>z := 1<br/>z = 2</pre><br/> <br/> Default: `true` |
+| `noresultvalues` | suggested fixes for unexpected return values <br/> This checker provides suggested fixes for type errors of the type "no result values expected" or "too many return values". For example: <br/> <pre>func z() { return nil }</pre><br/> will turn into <br/> <pre>func z() { return }</pre><br/> <br/> Default: `true` |
+| `omitzero` | suggest replacing omitempty with omitzero for struct fields <br/> The omitzero analyzer identifies uses of the \`omitempty\` JSON struct tag on fields that are themselves structs. For struct-typed fields, the \`omitempty\` tag has no effect on the behavior of json.Marshal and json.Unmarshal. The analyzer offers two suggestions: either remove the tag, or replace it with \`omitzero\` (added in Go 1.24), which correctly omits the field if the struct value is zero. <br/> However, some other serialization packages (notably kubebuilder, see [https://book.kubebuilder.io/reference/markers.html](https://book.kubebuilder.io/reference/markers.html)) may have their own interpretation of the \`json:",omitzero"\` tag, so removing it may affect program behavior. For this reason, the omitzero modernizer will not make changes in any package that contains +kubebuilder annotations. <br/> Replacing \`omitempty\` with \`omitzero\` is a change in behavior. The original code would always encode the struct field, whereas the modified code will omit it if it is a zero-value. <br/> <br/> Default: `true` |
+| `plusbuild` | remove obsolete //+build comments <br/> The plusbuild analyzer suggests a fix to remove obsolete build tags of the form: <br/> <pre>//+build linux,amd64</pre><br/> in files that also contain a Go 1.18-style tag such as: <br/> <pre>//go:build linux && amd64</pre><br/> (It does not check that the old and new tags are consistent; that is the job of the 'buildtag' analyzer in the vet suite.) <br/> <br/> Default: `true` |
+| `printf` | check consistency of Printf format strings and arguments <br/> The check applies to calls of the formatting functions such as [fmt.Printf](https://pkg.go.dev/fmt#Printf) and [fmt.Sprintf](https://pkg.go.dev/fmt#Sprintf), as well as any detected wrappers of those functions such as [log.Printf](https://pkg.go.dev/log#Printf). It reports a variety of mistakes such as syntax errors in the format string and mismatches (of number and type) between the verbs and their arguments. <br/> See the documentation of the fmt package for the complete set of format operators and their operand types. <br/> <br/> Default: `true` |
+| `ptrtoerror` | detect inconsistent conversions of concrete types to error <br/> The ptrtoerror analyzer detects when a concrete type E is converted to the error interface inconsistently, both as a value of type E and as a pointer of type \*E. Such inconsistency defeats attempts by client code to test for specific error types using type assertions or library functions such as [errors.As](https://pkg.go.dev/errors#As) and [errors.Is](https://pkg.go.dev/errors#Is). <br/> The analyzer also detects when both E and \*E implement error but neither of those types is converted to error within the defining package, leaving the intended error form (E or \*E) ambiguous. This diagnostic offers two alternative fixes to add declarations that make the intent explicit. <br/> <br/> Default: `true` |
+| `rangeint` | replace 3-clause for loops with for-range over integers <br/> The rangeint analyzer suggests replacing traditional for loops such as <br/> <pre>for i := 0; i < n; i++ { ... }</pre><br/> with the more idiomatic Go 1.22 style: <br/> <pre>for i := range n { ... }</pre><br/> This transformation is applied only if (a) the loop variable is not modified within the loop body and (b) the loop's limit expression is not modified within the loop, as \`for range\` evaluates its operand only once. <br/> <br/> Default: `true` |
+| `recursiveiter` | check for inefficient recursive iterators <br/> This analyzer reports when a function that returns an iterator (iter.Seq or iter.Seq2) calls itself as the operand of a range statement, as this is inefficient. <br/> When implementing an iterator (e.g. iter.Seq\[T]) for a recursive data type such as a tree or linked list, it is tempting to recursively range over the iterator for each child element. <br/> Here's an example of a naive iterator over a binary tree: <br/> <pre>type tree struct {<br/>	value       int<br/>	left, right *tree<br/>}</pre><br/> <pre>func (t *tree) All() iter.Seq[int] {<br/>	return func(yield func(int) bool) {<br/>		if t != nil {<br/>			for elem := range t.left.All() { // "inefficient recursive iterator"<br/>				if !yield(elem) {<br/>					return<br/>				}<br/>			}<br/>			if !yield(t.value) {<br/>				return<br/>			}<br/>			for elem := range t.right.All() { // "inefficient recursive iterator"<br/>				if !yield(elem) {<br/>					return<br/>				}<br/>			}<br/>		}<br/>	}<br/>}</pre><br/> Though it correctly enumerates the elements of the tree, it hides a significant performance problem--two, in fact. Consider a balanced tree of N nodes. Iterating the root node will cause All to be called once on every node of the tree. This results in a chain of nested active range-over-func statements when yield(t.value) is called on a leaf node. <br/> The first performance problem is that each range-over-func statement must typically heap-allocate a variable, so iteration of the tree allocates as many variables as there are elements in the tree, for a total of O(N) allocations, all unnecessary. <br/> The second problem is that each call to yield for a leaf of the tree causes each of the enclosing range loops to receive a value, which they then immediately pass on to their respective yield function. This results in a chain of log(N) dynamic yield calls per element, a total of O(N\*log N) dynamic calls overall, when only O(N) are necessary. <br/> A better implementation strategy for recursive iterators is to first define the "every" operator for your recursive data type, where every(f) reports whether an arbitrary predicate f(x) is true for every element x in the data type. For our tree, the every function would be: <br/> <pre>func (t *tree) every(f func(int) bool) bool {<br/>	return t == nil ||<br/>		t.left.every(f) && f(t.value) && t.right.every(f)<br/>}</pre><br/> For example, this use of the every operator prints whether every element in the tree is an even number: <br/> <pre>even := func(x int) bool { return x&1 == 0 }<br/>println(t.every(even))</pre><br/> Then the iterator can be simply expressed as a trivial wrapper around the every operator: <br/> <pre>func (t *tree) All() iter.Seq[int] {<br/>	return func(yield func(int) bool) {<br/>		_ = t.every(yield)<br/>	}<br/>}</pre><br/> In effect, tree.All computes whether yield returns true for each element, short-circuiting if it ever returns false, then discards the final boolean result. <br/> This has much better performance characteristics: it makes one dynamic call per element of the tree, and it doesn't heap-allocate anything. It is also clearer. <br/> <br/> Default: `true` |
+| `reflecttypeassert` | replace v.Interface().(T) with reflect.TypeAssert\[T](v) <br/> This analyzer suggests fixes to replace two-valued type assertions on the result of (reflect.Value).Interface with reflect.TypeAssert, introduced in go1.25, which avoids the intermediate allocation of an interface value, for example: <br/> <pre>x, ok := v.Interface().(string)  ->  x, ok := reflect.TypeAssert[string](v)</pre><br/> No fix is offered for single-valued assertions, since they panic when the assertion fails whereas reflect.TypeAssert does not. Nor is a fix offered for a type switch. <br/> <br/> Default: `true` |
+| `reflecttypefor` | replace reflect.TypeOf(x) with TypeFor\[T]() <br/> This analyzer suggests fixes to replace uses of reflect.TypeOf(x) with reflect.TypeFor, introduced in go1.22, when the desired runtime type is known at compile time, for example: <br/> <pre>reflect.TypeOf(uint32(0))        -> reflect.TypeFor[uint32]()<br/>reflect.TypeOf((*ast.File)(nil)) -> reflect.TypeFor[*ast.File]()</pre><br/> It also offers a fix to simplify the constructions below, which use reflect.TypeOf to return the runtime type for an interface type, <br/> <pre>reflect.TypeOf((*io.Reader)(nil)).Elem()</pre><br/> or: <br/> <pre>reflect.TypeOf([]io.Reader(nil)).Elem()</pre><br/> to: <br/> <pre>reflect.TypeFor[io.Reader]()</pre><br/> No fix is offered in cases when the runtime type is dynamic, such as: <br/> <pre>var r io.Reader = ...<br/>reflect.TypeOf(r)</pre><br/> or when the operand has potential side effects. <br/> Nor is a fix offered when the operand refers to a non-type symbol such as a variable, constant, function, or field, as in: <br/> <pre>reflect.TypeOf(pkg.Var)<br/>reflect.TypeOf(x.Field)<br/>reflect.TypeOf([arrayLen]byte{})</pre><br/> Replacing these with TypeFor\[T]() would erase the reference to the symbol, breaking any intended coupling between the reflected type and the type of that symbol. <br/> <br/> Default: `true` |
+| `scannererr` | scannererr: report failure to check bufio.Scanner.Err <br/> This analyzer reports uses of bufio.Scanner in which the result of NewScanner is assigned to a local variable that is then used in a loop that calls Scanner.Scan, but lacks a final check of Scanner.Err, which is how I/O errors are reported. <br/> For example: <br/> <pre>sc := bufio.NewScanner(os.Stdin) // error: "bufio.Scanner sc is used in Scan loop without final check of sc.Err()"<br/>for sc.Scan() {<br/>	line := sc.Text()<br/>	use(line)<br/>}<br/>/* ...no use of sc.Err()... */</pre><br/> To avoid false positives, the analyzer is silent if the scanner is passed into or out of the function or assigned somewhere other than a local variable. <br/> It is not this analyzer's goal to ensure proper handling of errors in all cases, but merely the simple mistakes where the user may have been oblivious to the existence of the Scanner.Err method. <br/> The analyzer ignores calls to bufio.NewScanner whose argument is an infallible memory-backed io.Reader such as strings.Reader or bytes.Buffer. (In such cases, Scan may yet fail if a token or line is too long for the scanner's internal buffer, but this is rare.) <br/> If you know that errors are impossible for a given scanner, you can suppress the diagnostic thus: <br/> <pre>_ = sc.Err() // ignore error; neither reading nor scanning can fail</pre><br/> <br/> Default: `true` |
 | `shadow` | check for possible unintended shadowing of variables <br/> This analyzer check for shadowed variables. A shadowed variable is a variable declared in an inner scope with the same name and type as a variable in an outer scope, and where the outer variable is mentioned after the inner one is declared. <br/> (This definition can be refined; the module generates too many false positives and is not yet enabled by default.) <br/> For example: <br/> <pre>func BadRead(f *os.File, buf []byte) error {<br/>	var err error<br/>	for {<br/>		n, err := f.Read(buf) // shadows the function variable 'err'<br/>		if err != nil {<br/>			break // causes return of wrong value<br/>		}<br/>		foo(buf)<br/>	}<br/>	return err<br/>}</pre><br/> <br/> Default: `false` |
-| `shift` | check for shifts that equal or exceed the width of the integer <br/> Default: `true` |
-| `simplifycompositelit` | check for composite literal simplifications <br/> An array, slice, or map composite literal of the form: <pre>[]T{T{}, T{}}</pre>will be simplified to: <pre>[]T{{}, {}}</pre><br/> This is one of the simplifications that "gofmt -s" applies. <br/> Default: `true` |
-| `simplifyrange` | check for range statement simplifications <br/> A range of the form: <pre>for x, _ = range v {...}</pre>will be simplified to: <pre>for x = range v {...}</pre><br/> A range of the form: <pre>for _ = range v {...}</pre>will be simplified to: <pre>for range v {...}</pre><br/> This is one of the simplifications that "gofmt -s" applies. <br/> Default: `true` |
-| `simplifyslice` | check for slice simplifications <br/> A slice expression of the form: <pre>s[a:len(s)]</pre>will be simplified to: <pre>s[a:]</pre><br/> This is one of the simplifications that "gofmt -s" applies. <br/> Default: `true` |
-| `sortslice` | check the argument type of sort.Slice <br/> sort.Slice requires an argument of a slice type. Check that the interface{} value passed to sort.Slice is actually a slice. <br/> Default: `true` |
-| `stdmethods` | check signature of methods of well-known interfaces <br/> Sometimes a type may be intended to satisfy an interface but may fail to do so because of a mistake in its method signature. For example, the result of this WriteTo method should be (int64, error), not error, to satisfy io.WriterTo: <br/> <pre>type myWriterTo struct{...}</pre>        func (myWriterTo) WriteTo(w io.Writer) error { ... } <br/> This check ensures that each method whose name matches one of several well-known interface methods from the standard library has the correct signature for that interface. <br/> Checked method names include: <pre>Format GobEncode GobDecode MarshalJSON MarshalXML<br/>Peek ReadByte ReadFrom ReadRune Scan Seek<br/>UnmarshalJSON UnreadByte UnreadRune WriteByte<br/>WriteTo</pre><br/> <br/> Default: `true` |
-| `stringintconv` | check for string(int) conversions <br/> This checker flags conversions of the form string(x) where x is an integer (but not byte or rune) type. Such conversions are discouraged because they return the UTF-8 representation of the Unicode code point x, and not a decimal string representation of x as one might expect. Furthermore, if x denotes an invalid code point, the conversion cannot be statically rejected. <br/> For conversions that intend on using the code point, consider replacing them with string(rune(x)). Otherwise, strconv.Itoa and its equivalents return the string representation of the value in the desired base. <br/> <br/> Default: `true` |
-| `structtag` | check that struct field tags conform to reflect.StructTag.Get <br/> Also report certain struct tags (json, xml) used with unexported fields. <br/> Default: `true` |
-| `testinggoroutine` | report calls to (*testing.T).Fatal from goroutines started by a test. <br/> Functions that abruptly terminate a test, such as the Fatal, Fatalf, FailNow, and Skip{,f,Now} methods of *testing.T, must be called from the test goroutine itself. This checker detects calls to these functions that occur within a goroutine started by the test. For example: <br/> func TestFoo(t *testing.T) {     go func() {         t.Fatal("oops") // error: (*T).Fatal called from non-test goroutine     }() } <br/> <br/> Default: `true` |
-| `tests` | check for common mistaken usages of tests and examples <br/> The tests checker walks Test, Benchmark and Example functions checking malformed names, wrong signatures and examples documenting non-existent identifiers. <br/> Please see the documentation for package testing in golang.org/pkg/testing for the conventions that are enforced for Tests, Benchmarks, and Examples. <br/> Default: `true` |
-| `undeclaredname` | suggested fixes for "undeclared name: <>" <br/> This checker provides suggested fixes for type errors of the type "undeclared name: <>". It will insert a new statement: "<> := ". <br/> Default: `true` |
-| `unmarshal` | report passing non-pointer or non-interface values to unmarshal <br/> The unmarshal analysis reports calls to functions such as json.Unmarshal in which the argument type is not a pointer or an interface. <br/> Default: `true` |
-| `unreachable` | check for unreachable code <br/> The unreachable analyzer finds statements that execution can never reach because they are preceded by an return statement, a call to panic, an infinite loop, or similar constructs. <br/> Default: `true` |
-| `unsafeptr` | check for invalid conversions of uintptr to unsafe.Pointer <br/> The unsafeptr analyzer reports likely incorrect uses of unsafe.Pointer to convert integers to pointers. A conversion from uintptr to unsafe.Pointer is invalid if it implies that there is a uintptr-typed word in memory that holds a pointer value, because that word will be invisible to stack copying and to the garbage collector. <br/> Default: `true` |
-| `unusedparams` | check for unused parameters of functions <br/> The unusedparams analyzer checks functions to see if there are any parameters that are not being used. <br/> To reduce false positives it ignores: - methods - parameters that do not have a name or are underscored - functions in test files - functions with empty bodies or those with just a return stmt <br/> Default: `false` |
-| `unusedresult` | check for unused results of calls to some functions <br/> Some functions like fmt.Errorf return a result and have no side effects, so it is always a mistake to discard the result. This analyzer reports calls to certain functions in which the result of the call is ignored. <br/> The set of functions may be controlled using flags. <br/> Default: `true` |
-| `unusedwrite` | checks for unused writes <br/> The analyzer reports instances of writes to struct fields and arrays that are never read. Specifically, when a struct object or an array is copied, its elements are copied implicitly by the compiler, and any element write to this copy does nothing with the original object. <br/> For example: <br/> <pre>type T struct { x int }<br/>func f(input []T) {<br/>	for i, v := range input {  // v is a copy<br/>		v.x = i  // unused write to field x<br/>	}<br/>}</pre><br/> Another example is about non-pointer receiver: <br/> <pre>type T struct { x int }<br/>func (t T) f() {  // t is a copy<br/>	t.x = i  // unused write to field x<br/>}</pre><br/> <br/> Default: `false` |
+| `shift` | check for shifts that equal or exceed the width of the integer <br/> <br/> Default: `true` |
+| `sigchanyzer` | check for unbuffered channel of os.Signal <br/> This checker reports call expression of the form <br/> <pre>signal.Notify(c <-chan os.Signal, sig ...os.Signal),</pre><br/> where c is an unbuffered channel, which can be at risk of missing the signal. <br/> <br/> Default: `true` |
+| `simplifycompositelit` | check for composite literal simplifications <br/> An array, slice, or map composite literal of the form: <br/> <pre>[]T{T{}, T{}}</pre><br/> will be simplified to: <br/> <pre>[]T{{}, {}}</pre><br/> This is one of the simplifications that "gofmt -s" applies. <br/> This analyzer ignores generated code. <br/> <br/> Default: `true` |
+| `simplifyrange` | check for range statement simplifications <br/> A range of the form: <br/> <pre>for x, _ = range v {...}</pre><br/> will be simplified to: <br/> <pre>for x = range v {...}</pre><br/> A range of the form: <br/> <pre>for _ = range v {...}</pre><br/> will be simplified to: <br/> <pre>for range v {...}</pre><br/> This is one of the simplifications that "gofmt -s" applies. <br/> This analyzer ignores generated code. <br/> <br/> Default: `true` |
+| `simplifyslice` | check for slice simplifications <br/> A slice expression of the form: <br/> <pre>s[a:len(s)]</pre><br/> will be simplified to: <br/> <pre>s[a:]</pre><br/> This is one of the simplifications that "gofmt -s" applies. <br/> This analyzer ignores generated code. <br/> <br/> Default: `true` |
+| `slicesbackward` | replace backward loops over slices with slices.Backward <br/> The slicesbackward analyzer suggests replacing manually-written backward loops of the form <br/> <pre>for i := len(s) - 1; i >= 0; i-- {<br/>    use(s[i])<br/>}</pre><br/> with the more readable Go 1.23 style using slices.Backward: <br/> <pre>for _, v := range slices.Backward(s) {<br/>    use(v)<br/>}</pre><br/> If the loop index is needed beyond just indexing into the slice, both the index and value variables are kept: <br/> <pre>for i, v := range slices.Backward(s) { ... }</pre><br/> <br/> Default: `true` |
+| `slicesclip` | replace three-index slice expressions with slices.Clip <br/> The slicesclip analyzer suggests replacing a full slice expression of the form <br/> <pre>x[:len(x):len(x)]</pre><br/> which clips the capacity of a slice to its length, with the simpler and more readable <br/> <pre>slices.Clip(x)</pre><br/> added in Go 1.21. <br/> <br/> Default: `true` |
+| `slicescontains` | replace loops with slices.Contains or slices.ContainsFunc <br/> The slicescontains analyzer simplifies loops that check for the existence of an element in a slice. It replaces them with calls to \`slices.Contains\` or \`slices.ContainsFunc\`, which were added in Go 1.21. <br/> If the expression for the target element has side effects, this transformation will cause those effects to occur only once, not once per tested slice element. <br/> <br/> Default: `true` |
+| `slicesdelete` | replace append-based slice deletion with slices.Delete <br/> The slicesdelete analyzer suggests replacing the idiom <br/> <pre>s = append(s[:i], s[j:]...)</pre><br/> with the more explicit <br/> <pre>s = slices.Delete(s, i, j)</pre><br/> introduced in Go 1.21. <br/> This analyzer is disabled by default. The \`slices.Delete\` function zeros the elements between the new length and the old length of the slice to prevent memory leaks, which is a subtle difference in behavior compared to the append-based idiom; see [https://go.dev/issue/73686](https://go.dev/issue/73686). <br/> <br/> Default: `false` |
+| `slicessort` | replace sort.Slice with slices.Sort for basic types <br/> The slicessort analyzer simplifies sorting slices of basic ordered types. It replaces <br/> <pre>sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })</pre><br/> with the simpler \`slices.Sort(s)\`, which was added in Go 1.21. <br/> <br/> Default: `true` |
+| `slog` | check for invalid structured logging calls <br/> The slog checker looks for calls to functions from the log/slog package that take alternating key-value pairs. It reports calls where an argument in a key position is neither a string nor a slog.Attr, and where a final key is missing its value. For example,it would report <br/> <pre>slog.Warn("message", 11, "k") // slog.Warn arg "11" should be a string or a slog.Attr</pre><br/> and <br/> <pre>slog.Info("message", "k1", v1, "k2") // call to slog.Info missing a final value</pre><br/> <br/> Default: `true` |
+| `sortslice` | check the argument type of sort.Slice <br/> sort.Slice requires an argument of a slice type. Check that the interface{} value passed to sort.Slice is actually a slice. <br/> <br/> Default: `true` |
+| `sqlrowserr` | sqlrowserr: report failure to check sql.Rows.Err <br/> This analyzer reports uses of sql.Rows in which the result of a query such as db.Query() is assigned to a local variable that is then used in a loop that calls Rows.Next, but lacks a final check of Rows.Err. This causes row iteration errors to be discarded. <br/> For example: <br/> <pre>rows, err := db.Query("select ...") // error: "sql.Rows rows is used in Next loop without final check of rows.Err()"<br/>if err != nil {<br/>	return err<br/>}<br/>defer rows.Close() // ignore error<br/>for rows.Next() {<br/>	var x int<br/>	if err := rows.Scan(&x); err != nil {<br/>		return err<br/>	}<br/>	use(x)<br/>}<br/>/* ...no use of rows.Err()... */</pre><br/> Correct usage of sql.Rows demands both a call to Rows.Close to release resources and a call to Rows.Err to report iteration errors. It is not critical to report resource cleanup errors, but it is crucial to report iteration errors as they would otherwise be indistinguishable from a smaller result. <br/> To avoid false positives, the analyzer is silent if the Rows is passed into or out of the function or assigned somewhere other than a local variable. <br/> It is not this analyzer's goal to ensure proper handling of errors in all cases, but merely the simple mistakes where the user may have been oblivious to the existence of the Rows.Err method. <br/> <br/> Default: `true` |
+| `stditerators` | use iterators instead of Len/At-style APIs <br/> This analyzer suggests a fix to replace each loop of the form: <br/> <pre>for i := 0; i < x.Len(); i++ {<br/>	use(x.At(i))<br/>}</pre><br/> or its "for elem := range x.Len()" equivalent by a range loop over an iterator offered by the same data type: <br/> <pre>for elem := range x.All() {<br/>	use(elem)<br/>}</pre><br/> where x is one of various well-known types in the standard library. <br/> <br/> Default: `true` |
+| `stdmethods` | check signature of methods of well-known interfaces <br/> Sometimes a type may be intended to satisfy an interface but may fail to do so because of a mistake in its method signature. For example, the result of this WriteTo method should be (int64, error), not error, to satisfy io.WriterTo: <br/> <pre>type myWriterTo struct{...}<br/>func (myWriterTo) WriteTo(w io.Writer) error { ... }</pre><br/> This check ensures that each method whose name matches one of several well-known interface methods from the standard library has the correct signature for that interface. <br/> Checked method names include: <br/> <pre>Format GobEncode GobDecode MarshalJSON MarshalXML<br/>Peek ReadByte ReadFrom ReadRune Scan Seek<br/>UnmarshalJSON UnreadByte UnreadRune WriteByte<br/>WriteTo</pre><br/> <br/> Default: `true` |
+| `stdversion` | report uses of too-new standard library symbols <br/> The stdversion analyzer reports references to symbols in the standard library that were introduced by a Go release higher than the one in force in the referring file. (Recall that the file's Go version is defined by the 'go' directive its module's go.mod file, or by a "//go:build go1.X" build tag at the top of the file.) <br/> The analyzer does not report a diagnostic for a reference to a "too new" field or method of a type that is itself "too new", as this may have false positives, for example if fields or methods are accessed through a type alias that is guarded by a Go version constraint. <br/> <br/> Default: `true` |
+| `stringintconv` | check for string(int) conversions <br/> This checker flags conversions of the form string(x) where x is an integer (but not byte or rune) type. Such conversions are discouraged because they return the UTF-8 representation of the Unicode code point x, and not a decimal string representation of x as one might expect. Furthermore, if x denotes an invalid code point, the conversion cannot be statically rejected. <br/> As of Go 1.28, such conversions are rejected by the compiler in files whose Go version is go1.28 or later. <br/> The checker offers two fixes. The first, which is applied by "go fix", preserves the existing behavior by converting x to a rune first: string(rune(x)). If x may be wider than 32 bits, truncation to a rune could turn an invalid code point into a valid one, so the fix instead uses fmt.Sprintf("%c", x), which, like string(x), yields "\\uFFFD" for all values outside the range of valid code points. <br/> The second fix formats the number as a decimal using fmt.Sprintf("%d", x), which is usually what was intended, but changes the behavior. <br/> To migrate a module to Go 1.28, run "go fix" before updating the go directive in its go.mod file, since after that, the package no longer compiles and cannot be analyzed. <br/> <br/> Default: `true` |
+| `stringsbuilder` | replace += with strings.Builder <br/> This analyzer replaces repeated string += string concatenation operations with calls to Go 1.10's strings.Builder. <br/> For example: <br/> <pre>var s = "["<br/>for x := range seq {<br/>	s += x<br/>	s += "."<br/>}<br/>s += "]"<br/>use(s)</pre><br/> is replaced by: <br/> <pre>var s strings.Builder<br/>s.WriteString("[")<br/>for x := range seq {<br/>	s.WriteString(x)<br/>	s.WriteString(".")<br/>}<br/>s.WriteString("]")<br/>use(s.String())</pre><br/> This avoids quadratic memory allocation and improves performance. <br/> No diagnostics are issued in tests, where data sizes are often small and asymptotic performance is not a security concern. <br/> The analyzer requires that all references to s before the final uses are += operations. To avoid warning about trivial cases, at least one must appear within a loop. The variable s must be a local variable, not a global or parameter. <br/> All uses of the finished string must come after the last += operation. Each such use will be replaced by a call to strings.Builder's String method. (These may appear within an intervening loop or function literal, since even if s.String() is called repeatedly, it does not allocate memory.) <br/> Often the addend is a call to fmt.Sprintf, as in this example: <br/> <pre>var s string<br/>for x := range seq {<br/>	s += fmt.Sprintf("%v", x)<br/>}</pre><br/> which, once the suggested fix is applied, becomes: <br/> <pre>var s strings.Builder<br/>for x := range seq {<br/>	s.WriteString(fmt.Sprintf("%v", x))<br/>}</pre><br/> The WriteString call can be further simplified to the more efficient fmt.Fprintf(&s, "%v", x), avoiding the allocation of an intermediary. However, stringsbuilder does not perform this simplification; it requires staticcheck analyzer QF1012. (See [https://go.dev/issue/76918](https://go.dev/issue/76918).) <br/> <br/> Default: `true` |
+| `stringscut` | replace strings.Index etc. with strings.Cut <br/> This analyzer replaces certain patterns of use of [strings.Index](https://pkg.go.dev/strings#Index) and string slicing by [strings.Cut](https://pkg.go.dev/strings#Cut), added in go1.18. It also replaces analogous uses of [strings.LastIndex](https://pkg.go.dev/strings#LastIndex) by [strings.CutLast](https://pkg.go.dev/strings#CutLast), added in go1.27. <br/> For example: <br/> <pre>idx := strings.Index(s, substr)<br/>if idx >= 0 {<br/>    return s[:idx]<br/>}</pre><br/> is replaced by: <br/> <pre>before, _, ok := strings.Cut(s, substr)<br/>if ok {<br/>    return before<br/>}</pre><br/> And: <br/> <pre>idx := strings.LastIndex(s, substr)<br/>if idx >= 0 {<br/>    return s[:idx]<br/>}</pre><br/> is replaced by: <br/> <pre>before, _, ok := strings.CutLast(s, substr)<br/>if ok {<br/>    return before<br/>}</pre><br/> And: <br/> <pre>idx := strings.Index(s, substr)<br/>if idx >= 0 {<br/>    return<br/>}</pre><br/> is replaced by: <br/> <pre>found := strings.Contains(s, substr)<br/>if found {<br/>    return<br/>}</pre><br/> (LastIndex used only as a presence check is also rewritten to Contains.) <br/> It also handles variants using [strings.IndexByte](https://pkg.go.dev/strings#IndexByte) or [strings.LastIndexByte](https://pkg.go.dev/strings#LastIndexByte) instead of Index/LastIndex, or the bytes package instead of strings. <br/> Fixes are offered only in cases in which there are no potential modifications of the idx, s, or substr expressions between their definition and use. CutLast fixes are offered only when the file's Go version is at least 1.27. <br/> It also replaces [strings.SplitN](https://pkg.go.dev/strings#SplitN)(s, sep, 2)\[0] and [strings.Split](https://pkg.go.dev/strings#Split)(s, sep)\[0] with the "before" result of strings.Cut, when sep is a non-empty string constant: <br/> <pre>x := strings.SplitN(s, sep, 2)[0]</pre><br/> is replaced by: <br/> <pre>x, _, _ := strings.Cut(s, sep)</pre><br/> The fix is only offered when sep is a non-empty string literal. When sep is a variable or the empty string, the semantics differ (strings.Split(s, "")\[0] returns the first character of s, but strings.Cut(s, "").before is ""), so no fix is suggested. <br/> <br/> Default: `true` |
+| `stringscutprefix` | replace HasPrefix/TrimPrefix with CutPrefix <br/> The stringscutprefix analyzer simplifies a common pattern where code first checks for a prefix with \`strings.HasPrefix\` and then removes it with \`strings.TrimPrefix\`. It replaces this two-step process with a single call to \`strings.CutPrefix\`, introduced in Go 1.20. The analyzer also handles the equivalent functions in the \`bytes\` package. <br/> For example, this input: <br/> <pre>if strings.HasPrefix(s, prefix) {<br/>    use(strings.TrimPrefix(s, prefix))<br/>}</pre><br/> is fixed to: <br/> <pre>if after, ok := strings.CutPrefix(s, prefix); ok {<br/>    use(after)<br/>}</pre><br/> The analyzer also offers fixes to use CutSuffix in a similar way. This input: <br/> <pre>if strings.HasSuffix(s, suffix) {<br/>    use(strings.TrimSuffix(s, suffix))<br/>}</pre><br/> is fixed to: <br/> <pre>if before, ok := strings.CutSuffix(s, suffix); ok {<br/>    use(before)<br/>}</pre><br/> <br/> Default: `true` |
+| `stringsseq` | replace ranging over Split/Fields with SplitSeq/FieldsSeq <br/> The stringsseq analyzer improves the efficiency of iterating over substrings. It replaces <br/> <pre>for range strings.Split(...)</pre><br/> with the more efficient <br/> <pre>for range strings.SplitSeq(...)</pre><br/> which was added in Go 1.24 and avoids allocating a slice for the substrings. The analyzer also handles strings.Fields and the equivalent functions in the bytes package. <br/> <br/> Default: `true` |
+| `structtag` | check that struct field tags conform to reflect.StructTag.Get <br/> Also report certain struct tags (json, xml) used with unexported fields. <br/> <br/> Default: `true` |
+| `testingcontext` | replace context.WithCancel with t.Context in tests <br/> The testingcontext analyzer simplifies context management in tests. It replaces the manual creation of a cancellable context, <br/> <pre>ctx, cancel := context.WithCancel(context.Background())<br/>defer cancel()</pre><br/> with a single call to t.Context(), which was added in Go 1.24. <br/> This change is only suggested if the \`cancel\` function is not used for any other purpose. <br/> <br/> Default: `true` |
+| `testinggoroutine` | report calls to (\*testing.T).Fatal from goroutines started by a test <br/> Functions that abruptly terminate a test, such as the Fatal, Fatalf, FailNow, and Skip{,f,Now} methods of \*testing.T, must be called from the test goroutine itself. This checker detects calls to these functions that occur within a goroutine started by the test. For example: <br/> <pre>func TestFoo(t *testing.T) {<br/>    go func() {<br/>        t.Fatal("oops") // error: (*T).Fatal called from non-test goroutine<br/>    }()<br/>}</pre><br/> <br/> Default: `true` |
+| `tests` | check for common mistaken usages of tests and examples <br/> The tests checker walks Test, Benchmark, Fuzzing and Example functions checking malformed names, wrong signatures and examples documenting non-existent identifiers. <br/> Please see the documentation for package testing in golang.org/pkg/testing for the conventions that are enforced for Tests, Benchmarks, and Examples. <br/> <br/> Default: `true` |
+| `timeformat` | check for calls of (time.Time).Format or time.Parse with 2006-02-01 <br/> The timeformat checker looks for time formats with the 2006-02-01 (yyyy-dd-mm) format. Internationally, "yyyy-dd-mm" does not occur in common calendar date standards, and so it is more likely that 2006-01-02 (yyyy-mm-dd) was intended. <br/> <br/> Default: `true` |
+| `unmarshal` | report passing non-pointer or non-interface values to unmarshal <br/> The unmarshal analysis reports calls to functions such as json.Unmarshal in which the argument type is not a pointer or an interface. <br/> <br/> Default: `true` |
+| `unreachable` | check for unreachable code <br/> The unreachable analyzer finds statements that execution can never reach because they are preceded by a return statement, a call to panic, an infinite loop, or similar constructs. <br/> <br/> Default: `true` |
+| `unsafefuncs` | replace unsafe pointer arithmetic with function calls <br/> The unsafefuncs analyzer simplifies pointer arithmetic expressions by replacing them with calls to helper functions such as unsafe.Add, added in Go 1.17. <br/> Example: <br/> <pre>unsafe.Pointer(uintptr(ptr) + uintptr(n))</pre><br/> where ptr is an unsafe.Pointer, is replaced by: <br/> <pre>unsafe.Add(ptr, n)</pre><br/> <br/> Default: `true` |
+| `unsafeptr` | check for invalid conversions of uintptr to unsafe.Pointer <br/> The unsafeptr analyzer reports likely incorrect uses of unsafe.Pointer to convert integers to pointers. A conversion from uintptr to unsafe.Pointer is invalid if it implies that there is a uintptr-typed word in memory that holds a pointer value, because that word will be invisible to stack copying and to the garbage collector. <br/> <br/> Default: `true` |
+| `unusedfunc` | check for unused functions, methods, etc <br/> The unusedfunc analyzer reports functions and methods that are never referenced outside of their own declaration. <br/> A function is considered unused if it is unexported and not referenced (except within its own declaration). <br/> A method is considered unused if it is unexported, not referenced (except within its own declaration), and its name does not match that of any method of an interface type declared within the same package. <br/> The tool may report false positives in some situations, for example: <br/>   - for a declaration of an unexported function that is referenced from another package using the go:linkname mechanism, if the declaration's doc comment does not also have a go:linkname comment. <br/>     (Such code is in any case strongly discouraged: linkname annotations, if they must be used at all, should be used on both the declaration and the alias.) <br/>   - for compiler intrinsics in the "runtime" package that, though never referenced, are known to the compiler and are called indirectly by compiled object code. <br/>   - for functions called only from assembly. <br/>   - for functions called only from files whose build tags are not selected in the current build configuration. <br/> Since these situations are relatively common in the low-level parts of the runtime, this analyzer ignores the standard library. See [https://go.dev/issue/71686](https://go.dev/issue/71686) and [https://go.dev/issue/74130](https://go.dev/issue/74130) for further discussion of these limitations. <br/> The unusedfunc algorithm is not as precise as the golang.org/x/tools/cmd/deadcode tool, but it has the advantage that it runs within the modular analysis framework, enabling near real-time feedback within gopls. <br/> The unusedfunc analyzer also reports unused types, vars, and constants. Enums--constants defined with iota--are ignored since even the unused values must remain present to preserve the logical ordering. <br/> <br/> Default: `true` |
+| `unusedparams` | check for unused parameters of functions <br/> The unusedparams analyzer checks functions to see if there are any parameters that are not being used. <br/> To ensure soundness, it ignores: <br/>   - "address-taken" functions, that is, functions that are used as a value rather than being called directly; their signatures may be required to conform to a func type.   - exported functions or methods, since they may be address-taken in another package.   - unexported methods whose name matches an interface method declared in the same package, since the method's signature may be required to conform to the interface type.   - functions with empty bodies, or containing just a call to panic.   - parameters that are unnamed, or named "\_", the blank identifier. <br/> The analyzer suggests a fix of replacing the parameter name by "\_", but in such cases a deeper fix can be obtained by invoking the "Refactor: remove unused parameter" code action, which will eliminate the parameter entirely, along with all corresponding arguments at call sites, while taking care to preserve any side effects in the argument expressions; see [https://github.com/golang/tools/releases/tag/gopls%2Fv0.14](https://github.com/golang/tools/releases/tag/gopls%2Fv0.14). <br/> This analyzer ignores generated code. <br/> <br/> Default: `true` |
+| `unusedresult` | check for unused results of calls to some functions <br/> Some functions like fmt.Errorf return a result and have no side effects, so it is always a mistake to discard the result. Other functions may return an error that must not be ignored, or a cleanup operation that must be called. This analyzer reports calls to functions like these when the result of the call is ignored. <br/> The set of functions may be controlled using flags. <br/> <br/> Default: `true` |
+| `unusedvariable` | check for unused variables and suggest fixes <br/> <br/> Default: `true` |
+| `unusedwrite` | checks for unused writes <br/> The analyzer reports instances of writes to struct fields and arrays that are never read. Specifically, when a struct object or an array is copied, its elements are copied implicitly by the compiler, and any element write to this copy does nothing with the original object. <br/> For example: <br/> <pre>type T struct { x int }</pre><br/> <pre>func f(input []T) {<br/>	for i, v := range input {  // v is a copy<br/>		v.x = i  // unused write to field x<br/>	}<br/>}</pre><br/> Another example is about non-pointer receiver: <br/> <pre>type T struct { x int }</pre><br/> <pre>func (t T) f() {  // t is a copy<br/>	t.x = i  // unused write to field x<br/>}</pre><br/> <br/> Default: `true` |
+| `waitgroup` | check for misuses of sync.WaitGroup <br/> This analyzer detects mistaken calls to the (\*sync.WaitGroup).Add method from inside a new goroutine, causing Add to race with Wait: <br/> <pre>// WRONG<br/>var wg sync.WaitGroup<br/>go func() {<br/>        wg.Add(1) // "WaitGroup.Add called from inside new goroutine"<br/>        defer wg.Done()<br/>        ...<br/>}()<br/>wg.Wait() // (may return prematurely before new goroutine starts)</pre><br/> The correct code calls Add before starting the goroutine: <br/> <pre>// RIGHT<br/>var wg sync.WaitGroup<br/>wg.Add(1)<br/>go func() {<br/>	defer wg.Done()<br/>	...<br/>}()<br/>wg.Wait()</pre><br/> <br/> Default: `true` |
+| `waitgroupgo` | replace wg.Add(1)/go/wg.Done() with wg.Go <br/> The waitgroupgo analyzer simplifies goroutine management with \`sync.WaitGroup\`. It replaces the common pattern <br/> <pre>wg.Add(1)<br/>go func() {<br/>	defer wg.Done()<br/>	...<br/>}()</pre><br/> with a single call to <br/> <pre>wg.Go(func(){ ... })</pre><br/> which was added in Go 1.25. <br/> <br/> Default: `true` |
+| `writestring` | detect inefficient string concatenation in uses of WriteString <br/> The writestring analyzer offers to replace a call to WriteString(x + y) by two calls WriteString(x); WriteString(y). This is more efficient because it avoids the additional memory allocation produced by string concatenation; instead we just write each string into the buffer directly. <br/> It explicitly looks for calls to certain well-known writers such as bytes.Buffer, strings.Builder and bufio.Writer. The analyzer will not suggest a fix for calls to, say, (\*os.File).WriteString, because for certain kinds of file such as a UDP socket, it could split a single message into two. Similarly it does not offer fixes when the type of the writer is unknown (as in calls to io.WriteString). <br/> For example: <br/> <pre>func f(a string, b string) string {<br/>	 var s strings.Builder<br/>	 s.WriteString(a+b)<br/>	 return s.String()<br/>}</pre><br/> would become: <br/> <pre>func f(a string, b string) string {<br/>	var s strings.Builder<br/>	s.WriteString(a)<br/>	s.WriteString(b)<br/>	return s.String()<br/>}</pre><br/> <br/> Default: `true` |
+| `yield` | report calls to yield where the result is ignored <br/> After a yield function returns false, the caller should not call the yield function again; generally the iterator should return promptly. <br/> This example fails to check the result of the call to yield, causing this analyzer to report a diagnostic: <br/> <pre>yield(1) // yield may be called again (on L2) after returning false<br/>yield(2)</pre><br/> The corrected code is either this: <br/> <pre>if yield(1) { yield(2) }</pre><br/> or simply: <br/> <pre>_ = yield(1) && yield(2)</pre><br/> It is not always a mistake to ignore the result of yield. For example, this is a valid single-element iterator: <br/> <pre>yield(1) // ok to ignore result<br/>return</pre><br/> It is only a mistake when the yield call that returned false may be followed by another call. <br/> <br/> Default: `true` |
+### `ui.diagnostic.analysisProgressReporting`
+
+analysisProgressReporting controls whether gopls sends progress
+notifications when construction of its index of analysis facts is taking a
+long time. Cancelling these notifications will cancel the indexing task,
+though it will restart after the next change in the workspace.
+
+When a package is opened for the first time and heavyweight analyses such as
+staticcheck are enabled, it can take a while to construct the index of
+analysis facts for all its dependencies. The index is cached in the
+filesystem, so subsequent analysis should be faster.
+
+
+Default: `true`
 ### `ui.diagnostic.annotations`
 
-(Experimental) annotations specifies the various kinds of optimization diagnostics
-that should be reported by the gc_details command.
+annotations specifies the various kinds of compiler
+optimization details that should be reported as diagnostics
+when enabled for a package by the "Toggle compiler
+optimization details" (`gopls.gc_details`) command.
+
+(Some users care only about one kind of annotation in their
+profiling efforts. More importantly, in large packages, the
+number of annotations can sometimes overwhelm the user
+interface and exceed the per-file diagnostic limit.)
+
+TODO(adonovan): rename this field to CompilerOptDetail.
 
 | Properties | Description |
 | --- | --- |
@@ -746,45 +1122,66 @@ on recently modified packages.
 This option must be set to a valid duration string, for example `"250ms"`.
 
 
-Default: `"250ms"`
-### `ui.diagnostic.experimentalWatchedFileDelay`
+Default: `"1s"`
+### `ui.diagnostic.diagnosticsTrigger`
 
-(Experimental) experimentalWatchedFileDelay controls the amount of time that gopls waits
-for additional workspace/didChangeWatchedFiles notifications to arrive,
-before processing all such notifications in a single batch. This is
-intended for use by LSP clients that don't support their own batching of
-file system notifications.
+(Experimental) diagnosticsTrigger controls when to run diagnostics.
+<br/>
+Allowed Options:
 
-This option must be set to a valid duration string, for example `"100ms"`.
+* `Edit`: `"Edit"`: Trigger diagnostics on file edit and save. (default)
+* `Save`: `"Save"`: Trigger diagnostics only on file save. Events like initial workspace load
+or configuration change will still trigger diagnostics.
 
 
-Default: `"0s"`
+Default: `"Edit"`
 ### `ui.diagnostic.staticcheck`
 
-(Experimental) staticcheck enables additional analyses from staticcheck.io.
+(Experimental) staticcheck configures the default set of analyses staticcheck.io.
+These analyses are documented on
+[Staticcheck's website](https://staticcheck.io/docs/checks/).
 
+The "staticcheck" option has three values:
+- false: disable all staticcheck analyzers
+- true: enable all staticcheck analyzers
+- unset: enable a subset of staticcheck analyzers
+  selected by gopls maintainers for runtime efficiency
+  and analytic precision.
+
+Regardless of this setting, individual analyzers can be
+selectively enabled or disabled using the `analyses` setting.
+
+
+Default: `false`
+### `ui.diagnostic.staticcheckProvided`
+
+(Experimental) 
 
 Default: `false`
 ### `ui.documentation.hoverKind`
 
 hoverKind controls the information that appears in the hover text.
-SingleLine and Structured are intended for use only by authors of editor plugins.
+SingleLine is intended for use only by authors of editor plugins.
 <br/>
 Allowed Options:
 
 * `FullDocumentation`
 * `NoDocumentation`
 * `SingleLine`
-* `Structured`: `"Structured"` is an experimental setting that returns a structured hover format.
-This format separates the signature from the documentation, so that the client
-can do more manipulation of these fields.<br/>This should only be used by clients that support this behavior.
+* `Structured`: `"Structured"` is a misguided experimental setting that returns a JSON
+hover format. This setting should not be used, as it will be removed in a
+future release of gopls.
 * `SynopsisDocumentation`
 
 
 Default: `"FullDocumentation"`
 ### `ui.documentation.linkTarget`
 
-linkTarget controls where documentation links go.
+linkTarget is the base URL for links to Go package
+documentation returned by LSP operations such as Hover and
+DocumentLinks and in the CodeDescription field of each
+Diagnostic.
+
 It might be one of:
 
 * `"godoc.org"`
@@ -792,14 +1189,37 @@ It might be one of:
 
 If company chooses to use its own `godoc.org`, its address can be used as well.
 
+Modules matching the GOPRIVATE environment variable will not have
+documentation links in hover.
+
 
 Default: `"pkg.go.dev"`
 ### `ui.documentation.linksInHover`
 
-linksInHover toggles the presence of links to documentation in hover.
+linksInHover controls the presence of documentation links in hover markdown.
+<br/>
+Allowed Options:
+
+* `false`: false: do not show links
+* `true`: true: show links to the `linkTarget` domain
+* `gopls`: `"gopls"`: show links to gopls' internal documentation viewer
 
 
 Default: `true`
+### `ui.moveDeclaration`
+
+(Experimental) moveDeclaration enables producing Move Declaration codeactions. The implementation
+is unfinished so we use this setting to gate its use.
+
+
+Default: `false`
+### `ui.moveType`
+
+(Experimental) moveType enables producing Move Type codeactions. The implementation
+is unfinished so we use this setting to gate its use.
+
+
+Default: `false`
 ### `ui.navigation.importShortcut`
 
 importShortcut specifies whether import statements should link to
@@ -812,9 +1232,24 @@ Default: `"Both"`
 
 (Advanced) symbolMatcher sets the algorithm that is used when finding workspace symbols.
 <br/>
-Allowed Options: `CaseInsensitive`, `CaseSensitive`, `Fuzzy`
+Allowed Options: `CaseInsensitive`, `CaseSensitive`, `FastFuzzy`, `Fuzzy`
 
-Default: `"Fuzzy"`
+Default: `"FastFuzzy"`
+### `ui.navigation.symbolScope`
+
+symbolScope controls which packages are searched for workspace/symbol
+requests. When the scope is "workspace", gopls searches only workspace
+packages. When the scope is "all", gopls searches all loaded packages,
+including dependencies and the standard library.
+<br/>
+Allowed Options:
+
+* `all`: `"all"` matches symbols in any loaded package, including
+dependencies.
+* `workspace`: `"workspace"` matches symbols in workspace packages only.
+
+
+Default: `"all"`
 ### `ui.navigation.symbolStyle`
 
 (Advanced) symbolStyle controls how symbols are qualified in symbol responses.
@@ -824,7 +1259,7 @@ Example Usage:
 ```json5
 "gopls": {
 ...
-  "symbolStyle": "dynamic",
+  "symbolStyle": "Dynamic",
 ...
 }
 ```
@@ -842,10 +1277,72 @@ just "Foo.Field".
 
 
 Default: `"Dynamic"`
+### `ui.newGoFileHeader`
+
+newGoFileHeader enables automatic insertion of the copyright comment
+and package declaration in a newly created Go file.
+
+
+Default: `true`
+### `ui.noSemanticNumber (deprecated)`
+
+use SemanticTokenTypes["number"] = false instead. See
+golang/vscode-go#3632.
+
+(Experimental) noSemanticNumber turns off the sending of the semantic token 'number'
+
+Deprecated: Use SemanticTokenTypes["number"] = false instead. See
+golang/vscode-go#3632.
+
+
+Default: `false`
+### `ui.noSemanticString (deprecated)`
+
+use SemanticTokenTypes["string"] = false instead. See
+golang/vscode-go#3632
+
+(Experimental) noSemanticString turns off the sending of the semantic token 'string'
+
+Deprecated: Use SemanticTokenTypes["string"] = false instead. See
+golang/vscode-go#3632
+
+
+Default: `false`
+### `ui.renameMovesSubpackages`
+
+(Experimental) renameMovesSubpackages enables Rename operations on packages to
+move subdirectories of the target package.
+
+
+Default: `false`
+### `ui.semanticTokenModifiers`
+
+(Experimental) semanticTokenModifiers configures the semantic token modifiers. It allows
+disabling modifiers by setting each value to false.
+By default, all modifiers are enabled.
+
+### `ui.semanticTokenTypes`
+
+(Experimental) semanticTokenTypes configures the semantic token types. It allows
+disabling types by setting each value to false.
+By default, all types are enabled.
+
 ### `ui.semanticTokens`
 
-(Experimental) semanticTokens controls whether the LSP server will send
-semantic tokens to the client.
+(Experimental) semanticTokens determines whether gopls will return a
+SemanticTokensProvider at initialization, or respond
+to requests for semantic tokens.
+
+This setting being `false` won't necessary disable the client's calls
+for semantic tokens. If you want that, it would need to be configured in
+the client. For example, in VSCode, this would disable all Go semantic
+token calls to the LSP server:
+
+```json5
+"[go]": {
+    "editor.semanticHighlighting.enabled": false,
+}
+```
 
 
 Default: `false`

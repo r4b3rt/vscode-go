@@ -23,13 +23,29 @@ Finally, you can also see a full list by using a meta command: `Go: Show All Com
 
 <!-- Everything below this line is generated. DO NOT EDIT. -->
 
+### `Go: Open in new Document`
+
+Open selected variable in a new document.
+
 ### `Go: Current GOPATH`
 
 See the currently set GOPATH.
 
+### `Go: Current GOROOT`
+
+See the currently set GOROOT.
+
 ### `Go: Locate Configured Go Tools`
 
 List all the Go tools being used by this extension along with their locations.
+
+### `Package Outline: Sort By Name`
+
+Sort Package Outline symbols alphabetically.
+
+### `Package Outline: Sort By Position`
+
+Sort Package Outline symbols by source position.
 
 ### `Go: Test Function At Cursor`
 
@@ -42,6 +58,10 @@ Runs a unit test at the cursor if one is found, otherwise re-runs the last execu
 ### `Go: Subtest At Cursor`
 
 Runs a sub test at the cursor.
+
+### `Go: Debug Subtest At Cursor`
+
+Debug a sub test at the cursor.
 
 ### `Go: Benchmark Function At Cursor`
 
@@ -58,6 +78,30 @@ Runs all unit tests in the current file.
 ### `Go: Test Package`
 
 Runs all unit tests in the package of the current file.
+
+### `Go: Toggle Hide System Goroutines`
+
+Toggles hiding the system goroutines from the active debug session call stack view.
+
+### `Go Test: Refresh`
+
+Refresh a test in the test explorer. Only available as a context menu option in the test explorer.
+
+### `Go Test: Show Last Profile`
+
+Show last captured profile
+
+### `Go Test: Profile`
+
+Run a test and capture a profile
+
+### `Go Test: Delete Profile`
+
+Delete selected profile
+
+### `Go: Show pprof file`
+
+Internal use. Open a pprof profile file.
 
 ### `Go: Benchmark Package`
 
@@ -85,19 +129,27 @@ Displays test coverage in the current package.
 
 ### `Go: Generate Unit Tests For Package`
 
-Generates unit tests for the current package
+Generates unit tests for the current package using gotests
 
 ### `Go: Generate Unit Tests For File`
 
-Generates unit tests for the current file
+Generates unit tests for the current file using gotests
 
 ### `Go: Generate Unit Tests For Function`
 
-Generates unit tests for the selected function in the current file
+Generates unit tests for the selected function in the current file using gopls
+
+### `Go: Generate Unit Tests For Function (legacy)`
+
+Generates unit tests for the selected function in the current file using gotests
 
 ### `Go: Generate Interface Stubs`
 
-Generates method stub for implementing the provided interface and inserts at the cursor.
+Generates method stub for implementing the provided interface for the type at the cursor using gopls.
+
+### `Go: Generate Interface Stubs (legacy)`
+
+Generates method stub for implementing the provided interface and inserts at the cursor using impl.
 
 ### `Go: Extract Language Server Logs To Editor`
 
@@ -107,9 +159,9 @@ Extract logs in the `gopls (server)` output channel to the editor.
 
 Open the welcome page for the Go extension.
 
-### `Go: Toggle gc details`
+### `Go: Toggle compiler optimization details`
 
-Toggle the display of compiler optimization choices
+Toggle the per-package flag that causes compiler optimization details to be reported as diagnostics
 
 ### `Go: Add Import`
 
@@ -127,17 +179,21 @@ install/update the required go packages
 
 Toggles between file in current active editor and the corresponding test file.
 
+### `Go: Toggle Vulncheck`
+
+Toggle the display of vulnerability analysis in dependencies.
+
+### `Go: Start language server's maintainer interface`
+
+Start the Go language server's maintainer interface (a web server).
+
 ### `Go: Add Tags To Struct Fields`
 
-Add tags configured in go.addTags setting to selected struct using gomodifytags
+Add tags configured in go.addTags setting to selected struct using gomodifytags (via gopls)
 
 ### `Go: Remove Tags From Struct Fields`
 
-Remove tags configured in go.removeTags setting from selected struct using gomodifytags
-
-### `Go: Fill struct`
-
-Fill a struct literal with default values
+Remove tags configured in go.removeTags setting from selected struct using gomodifytags (via gopls)
 
 ### `Go: Show All Commands...`
 
@@ -195,14 +251,6 @@ Cancels running tests.
 
 Applies existing cover profile.
 
-### `Go: Extract to function`
-
-Extract to function using godoctor.
-
-### `Go: Extract to variable`
-
-Extract to variable using godoctor.
-
 ### `Go: Restart Language Server`
 
 Restart the running instance of the language server
@@ -227,6 +275,18 @@ Reset keys in workspace state to undefined.
 
 Reset keys in global state to undefined.
 
-### `Go: Toggle Workspace Trust Flag`
+### `Go Explorer: Refresh`
 
-Toggle the workspace trust flag. Workspace settings that determine tool locations are disabled by default in untrusted workspaces.
+Refresh the Go explorer. Only available as a menu item in the explorer.
+
+### `Go Explorer: Open File`
+
+Open a file from the Go explorer. Only available as a menu item in the explorer.
+
+### `Go: Edit Workspace Env`
+
+Edit the Go Env for the active workspace.
+
+### `Go: Reset Workspace Env`
+
+Reset the Go Env for the active workspace.

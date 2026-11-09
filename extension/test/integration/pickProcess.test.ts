@@ -1,0 +1,258 @@
+/*---------------------------------------------------------
+ * Copyright 2021 The Go Authors. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *--------------------------------------------------------*/
+
+import assert from 'assert';
+import { AttachItem, compareByProcessId, mergeExecutableAttachItem, parseGoVersionOutput } from '../../src/pickProcess';
+import { parseLsofProcesses } from '../../src/utils/lsofProcessParser';
+import { parsePsProcesses } from '../../src/utils/psProcessParser';
+import { parseWindowsProcessInfo } from '../../src/utils/windowsProcessParser';
+
+suite('Pick Process Tests', () => {
+	test('Parse go version output', () => {
+		const tt = [
+			{
+				input: '/path/to/process/a: go1.16.2\n/path/to/process/b: go1.15.4\n/path/to/process/a b c: go1.8.0\n/path/to/process/d: go1.14',
+				want: ['/path/to/process/a', '/path/to/process/b', '/path/to/process/a b c', '/path/to/process/d']
+			},
+			{
+				input: 'C:\\path\\to\\process\\a: go1.16.2\nC:\\path\\to\\process\\b: go1.15.4\nC:\\path\\to\\process\\a b c: go1.8.0\nC:\\path\\to\\process\\d: go1.14',
+				want: [
+					'C:\\path\\to\\process\\a',
+					'C:\\path\\to\\process\\b',
+					'C:\\path\\to\\process\\a b c',
+					'C:\\path\\to\\process\\d'
+				]
+			},
+			{
+				input: 'go version go1.15.7 darwin/amd64',
+				want: []
+			},
+			{
+				input: '/path/to/process/a: go11a62b12\n/path/to/process/b: go1/15/4\n/path/to/process/a b c: gob.v.b\n/path/to/process/d: gp1.14',
+				want: []
+			},
+			{
+				// Match go versions with custom suffixes like "X:nodwarf5" or "rc1".
+				input: '/path/to/process/a: go1.26.5-X:nodwarf5\n/path/to/process/b: go1.22rc1',
+				want: ['/path/to/process/a', '/path/to/process/b']
+			}
+		];
+		for (const tc of tt) {
+			const got = parseGoVersionOutput(tc.input);
+			assert.strictEqual(got.length, tc.want.length);
+			for (let i = 0; i < got.length; i++) {
+				assert.strictEqual(got[i], tc.want[i]);
+			}
+		}
+	});
+	test('Parse lsof output', () => {
+		const tt = [
+			{
+				input: `p1010
+ftxt
+n/Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)
+ftxt
+n/Applications/Visual Studio Code.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework
+ftxt
+n/Applications/Visual Studio Code.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib
+p2020
+ftxt
+n/User/name/go/bin/go`,
+				want: [
+					{
+						id: '1010',
+						executable:
+							'/Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)'
+					},
+					{
+						id: '2020',
+						executable: '/User/name/go/bin/go'
+					}
+				]
+			}
+		];
+		for (const tc of tt) {
+			const got = parseLsofProcesses(tc.input);
+			got.sort(compareByProcessId);
+			assert.strictEqual(got.length, tc.want.length);
+			for (let i = 0; i < got.length; i++) {
+				assert.strictEqual(got[i].id, tc.want[i].id);
+				assert.strictEqual(got[i].executable, tc.want[i].executable);
+			}
+		}
+	});
+
+	test('Merge processes', () => {
+		const tt: {
+			processes: AttachItem[];
+			execInfo: AttachItem[];
+			want: AttachItem[];
+		}[] = [
+			{
+				processes: [
+					{
+						id: '100',
+						processName: 'a',
+						label: 'a'
+					},
+					{
+						id: '50',
+						processName: 'b',
+						label: 'b'
+					},
+					{
+						id: '130',
+						processName: 'b',
+						label: 'b'
+					},
+					{
+						id: '300',
+						processName: 'c',
+						label: 'c'
+					}
+				],
+				execInfo: [
+					{
+						id: '50',
+						label: '',
+						executable: '/path/to/b'
+					},
+					{
+						id: '300',
+						label: '',
+						executable: '/path/to/c'
+					}
+				],
+
+				want: [
+					{
+						id: '50',
+						processName: 'b',
+						label: 'b',
+						executable: '/path/to/b'
+					},
+					{
+						id: '100',
+						processName: 'a',
+						label: 'a'
+					},
+					{
+						id: '130',
+						processName: 'b',
+						label: 'b'
+					},
+					{
+						id: '300',
+						processName: 'c',
+						label: 'c',
+						executable: '/path/to/c'
+					}
+				]
+			}
+		];
+		for (const tc of tt) {
+			mergeExecutableAttachItem(tc.processes, tc.execInfo);
+			tc.processes.sort(compareByProcessId);
+			assert.strictEqual(tc.processes.length, tc.want.length);
+			for (let i = 0; i < tc.processes.length; i++) {
+				assert.strictEqual(tc.processes[i].id, tc.want[i].id);
+				assert.strictEqual(tc.processes[i].label, tc.want[i].label);
+				assert.strictEqual(tc.processes[i].processName, tc.want[i].processName);
+				assert.strictEqual(tc.processes[i].executable, tc.want[i].executable);
+			}
+		}
+	});
+
+	test('Parse ps output (Linux/macOS)', () => {
+		const secondColumnCharacters = 50;
+		const commColumnTitle = ''.padStart(secondColumnCharacters, 'a');
+		const commVal = 'my-go-app'.padEnd(secondColumnCharacters - 1, ' ');
+		const input = `PID ${commColumnTitle} ARGS\n 1234 ${commVal} /usr/local/bin/my-go-app --flag`;
+		const got = parsePsProcesses(input);
+		assert.strictEqual(got.length, 1);
+		assert.strictEqual(got[0].id, '1234');
+		assert.strictEqual(got[0].processName, 'my-go-app');
+		assert.strictEqual(got[0].commandLine, '/usr/local/bin/my-go-app --flag');
+	});
+
+	test('Parse windows process info', () => {
+		const tt = [
+			{
+				input: {
+					processId: 1234,
+					parentProcessId: 100,
+					creationDate: 1700000000,
+					commandLine: '"C:\\Program Files\\Go\\bin\\go.exe" run main.go'
+				},
+				want: {
+					id: '1234',
+					label: 'go.exe',
+					processName: 'go.exe',
+					description: '1234',
+					detail: '"C:\\Program Files\\Go\\bin\\go.exe" run main.go',
+					executable: 'C:\\Program Files\\Go\\bin\\go.exe'
+				}
+			},
+			{
+				input: {
+					processId: 5678,
+					parentProcessId: 100,
+					creationDate: 1700000000,
+					commandLine: 'C:\\tools\\myapp.exe --port 8080'
+				},
+				want: {
+					id: '5678',
+					label: 'myapp.exe',
+					processName: 'myapp.exe',
+					description: '5678',
+					detail: 'C:\\tools\\myapp.exe --port 8080',
+					executable: 'C:\\tools\\myapp.exe'
+				}
+			},
+			{
+				input: {
+					processId: 9012,
+					parentProcessId: 100,
+					creationDate: 1700000000,
+					commandLine: '\\??\\C:\\Windows\\system32\\cmd.exe'
+				},
+				want: {
+					id: '9012',
+					label: 'cmd.exe',
+					processName: 'cmd.exe',
+					description: '9012',
+					detail: '\\??\\C:\\Windows\\system32\\cmd.exe',
+					executable: '\\??\\C:\\Windows\\system32\\cmd.exe'
+				}
+			},
+			{
+				input: {
+					processId: 44,
+					parentProcessId: 0,
+					creationDate: 1700000000,
+					commandLine: ''
+				},
+				want: {
+					id: '44',
+					label: 'Process 44',
+					processName: 'Process 44',
+					description: '44',
+					detail: '',
+					executable: ''
+				}
+			}
+		];
+
+		for (const tc of tt) {
+			const got = parseWindowsProcessInfo(tc.input);
+			assert.strictEqual(got.id, tc.want.id);
+			assert.strictEqual(got.label, tc.want.label);
+			assert.strictEqual(got.processName, tc.want.processName);
+			assert.strictEqual(got.description, tc.want.description);
+			assert.strictEqual(got.detail, tc.want.detail);
+			assert.strictEqual(got.executable, tc.want.executable);
+		}
+	});
+});

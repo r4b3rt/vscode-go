@@ -33,10 +33,10 @@
 	"tasks": [
 		{
 			"type": "typescript",
-			"tsconfig": "tsconfig.json",
+			"tsconfig": "extension/tsconfig.json",
 			"problemMatcher": [
 				"$tsc"
-			]
+			],
 		},
 		{
 			"type": "npm",
@@ -49,7 +49,26 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			}
+			},
+			"path": "extension"
+		},
+		{
+			"type": "npm",
+			"script": "bundle-watch",
+			"group": "build",
+			"problemMatcher": "$esbuild-watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never"
+			},
+			"path": "extension"
+		},
+		{
+			"type": "npm",
+			"script": "bundle-dev",
+			"group": "build",
+			"problemMatcher": "$esbuild",
+			"path": "extension"
 		}
 	]
 }

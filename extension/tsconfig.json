@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"module": "Node16",
+		"moduleResolution": "Node16",
+		"outDir": "out",
+		"sourceMap": true,
+		"target": "es2024",
+		"lib": [
+			"es2024"
+		],
+		"strict": true,
+		"esModuleInterop": true,
+	},
+	"exclude": [
+		"node_modules",
+		"third_party"
+	]
+}

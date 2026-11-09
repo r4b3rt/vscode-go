@@ -1,0 +1,6 @@
+{
+  "packageAllowlist": [
+    "es5class",
+    "minimatch"
+  ]
+}
